@@ -1655,6 +1655,10 @@ const server = http.createServer(async (req, res) => {
 
   // Route aliases for alternative index layouts
   const layoutAliases = {
+    '/v1': 'index-v1.html',
+    '/v2': 'index-v2.html',
+    '/v3': 'index-v3.html',
+    '/v4': 'index-v4.html',
     '/sidebar': 'index-sidebar.html',
     '/hubs': 'index-hubs.html',
     '/bento': 'index-bento.html',

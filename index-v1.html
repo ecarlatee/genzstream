@@ -1,0 +1,792 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="color-scheme" content="dark" />
+  <title>GenZstream · Variante 1 : Onglets d'Univers & Rails Modernes</title>
+  <link rel="icon" href="/favicon.png" type="image/png" sizes="64x64" />
+  <link rel="stylesheet" href="/assets/f3jcgis3.css" />
+  <style>
+    :root {
+      --color-fond: #0a0a0a;
+      --color-fond2: #101010;
+      --color-panneau: #161616;
+      --color-panneau2: #1e1e1c;
+      --color-bordure: #262626;
+      --color-bordure-claire: #3a3a38;
+      --color-doux: #a8a29a;
+      --color-creme: #f0ead8;
+      --color-vf: #10b981;
+      --color-vostfr: #f59e0b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Instrument Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--color-fond);
+      color: var(--color-creme);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Switcher de versions */
+    .version-switch {
+      background: #000;
+      border-bottom: 1px solid var(--color-bordure);
+      padding: 6px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 12px;
+      overflow-x: auto;
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    .version-switch span { color: var(--color-doux); font-weight: 700; text-transform: uppercase; }
+    .version-switch a {
+      color: var(--color-doux);
+      text-decoration: none;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: rgba(240, 234, 216, 0.05);
+      transition: all 0.2s;
+    }
+    .version-switch a:hover { background: rgba(240, 234, 216, 0.15); color: #fff; }
+    .version-switch a.active {
+      background: var(--color-creme);
+      color: #000;
+      font-weight: 700;
+    }
+
+    /* Top Navigation (Identique à la version actuelle) */
+    .top-nav {
+      position: sticky;
+      top: 31px;
+      z-index: 100;
+      background: rgba(10, 10, 10, 0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--color-bordure);
+      padding: 12px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--color-creme);
+    }
+    .nav-brand img {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1px solid rgba(240, 234, 216, 0.25);
+    }
+    .nav-brand-title {
+      font-size: 19px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .nav-link {
+      color: var(--color-doux);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-link:hover, .nav-link.active {
+      color: var(--color-creme);
+      font-weight: 600;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .search-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--color-fond2);
+      border: 1px solid var(--color-bordure);
+      padding: 7px 14px;
+      border-radius: 9999px;
+      width: 260px;
+    }
+    .search-bar input {
+      background: transparent;
+      border: none;
+      color: var(--color-creme);
+      font-size: 13px;
+      outline: none;
+      width: 100%;
+    }
+    .telegram-link {
+      font-size: 12px;
+      color: var(--color-doux);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 9999px;
+      border: 1px solid var(--color-bordure);
+      transition: all 0.2s;
+    }
+    .telegram-link:hover {
+      border-color: var(--color-creme);
+      color: var(--color-creme);
+    }
+
+    /* Hero Banner Immersif */
+    .hero {
+      position: relative;
+      height: 480px;
+      display: flex;
+      align-items: flex-end;
+      padding: 48px 48px 40px;
+      background-size: cover;
+      background-position: center 25%;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(10,10,10,0.2) 0%, rgba(10,10,10,0.6) 60%, #0a0a0a 100%),
+                  linear-gradient(90deg, rgba(10,10,10,0.9) 0%, rgba(10,10,10,0.4) 60%, transparent 100%);
+    }
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 680px;
+    }
+    .hero-badges {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      align-items: center;
+    }
+    .badge-populaire {
+      background: rgba(240, 234, 216, 0.15);
+      border: 1px solid rgba(240, 234, 216, 0.3);
+      color: var(--color-creme);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+    .hero-title {
+      font-size: 44px;
+      font-weight: 900;
+      line-height: 1.1;
+      letter-spacing: -0.5px;
+      margin-bottom: 14px;
+      color: #fff;
+    }
+    .hero-synopsis {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #d6d3cd;
+      margin-bottom: 22px;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+    }
+    .btn-play {
+      background: var(--color-creme);
+      color: #000;
+      border: none;
+      padding: 12px 26px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: transform 0.2s, background-color 0.2s;
+    }
+    .btn-play:hover { transform: scale(1.03); background: #fff; }
+    .btn-details {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      color: var(--color-creme);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 12px 22px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-details:hover { background: rgba(255, 255, 255, 0.2); }
+
+    /* Tabs / Pôles d'univers (Barre sous le Hero) */
+    .tabs-bar-wrap {
+      padding: 0 48px;
+      margin-top: -10px;
+      position: relative;
+      z-index: 10;
+    }
+    .tabs-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(22, 22, 22, 0.8);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--color-bordure);
+      padding: 8px 12px;
+      border-radius: 14px;
+      overflow-x: auto;
+    }
+    .tab-pill {
+      background: transparent;
+      border: none;
+      color: var(--color-doux);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .tab-pill:hover {
+      color: var(--color-creme);
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .tab-pill.active {
+      background: var(--color-creme);
+      color: #000;
+      font-weight: 800;
+    }
+
+    /* Content Area & Rails Horizontaux (Carrousels) */
+    .content-feed {
+      padding: 32px 48px 60px;
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+    }
+    .rail-block {
+      position: relative;
+    }
+    .rail-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .rail-title {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .rail-arrows {
+      display: flex;
+      gap: 6px;
+    }
+    .arrow-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--color-panneau);
+      border: 1px solid var(--color-bordure);
+      color: var(--color-creme);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    .arrow-btn:hover {
+      background: var(--color-bordure-claire);
+    }
+
+    .rail-slider {
+      display: flex;
+      gap: 16px;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+      padding: 6px 0 16px;
+      scrollbar-width: none;
+    }
+    .rail-slider::-webkit-scrollbar { display: none; }
+
+    .card {
+      flex: 0 0 180px;
+      background: var(--color-panneau);
+      border: 1px solid var(--color-bordure);
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s, box-shadow 0.25s;
+    }
+    .card:hover {
+      transform: translateY(-6px);
+      border-color: var(--color-bordure-claire);
+      box-shadow: 0 12px 24px rgba(0,0,0,0.6);
+    }
+    .card-poster {
+      position: relative;
+      padding-top: 148%;
+      background: #111;
+      overflow: hidden;
+    }
+    .card-poster img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s;
+    }
+    .card:hover .card-poster img {
+      transform: scale(1.04);
+    }
+    .card-badges {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      z-index: 2;
+    }
+    .badge-vf {
+      background: var(--color-vf);
+      color: #000;
+      font-size: 9px;
+      font-weight: 800;
+      padding: 2px 5px;
+      border-radius: 3px;
+    }
+    .badge-vostfr {
+      background: var(--color-vostfr);
+      color: #000;
+      font-size: 9px;
+      font-weight: 800;
+      padding: 2px 5px;
+      border-radius: 3px;
+    }
+    .card-info {
+      padding: 10px 12px;
+    }
+    .card-title {
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 4px;
+    }
+    .card-meta {
+      font-size: 11px;
+      color: var(--color-doux);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* Modal Player (Ultra clean) */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      padding: 20px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-container {
+      background: var(--color-fond2);
+      border: 1px solid var(--color-bordure);
+      border-radius: 16px;
+      width: 920px;
+      max-width: 100%;
+      overflow: hidden;
+      position: relative;
+    }
+    .modal-close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: rgba(0,0,0,0.6);
+      border: 1px solid var(--color-bordure);
+      color: #fff;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      z-index: 10;
+    }
+    .modal-aspect {
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: #000;
+    }
+    .modal-aspect iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    .modal-info {
+      padding: 24px;
+    }
+    .sources-grid {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    .source-btn {
+      background: var(--color-panneau);
+      border: 1px solid var(--color-bordure);
+      color: var(--color-creme);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .source-btn:hover, .source-btn.active {
+      background: var(--color-creme);
+      color: #000;
+    }
+
+    /* Footer */
+    .footer {
+      border-top: 1px solid var(--color-bordure);
+      padding: 30px 48px;
+      margin-top: auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      color: var(--color-doux);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Switcher de versions -->
+  <div class="version-switch">
+    <span>Designs Disponibles :</span>
+    <a href="/">Version Actuelle</a>
+    <a href="/v1" class="active">Variante 1 : Pôles d'Univers & Rails</a>
+    <a href="/v2">Variante 2 : Top 10 Numéroté & Multi-Hero</a>
+    <a href="/v3">Variante 3 : Hero Panoramique & Épisodes 16:9</a>
+    <a href="/v4">Variante 4 : Accordéon In-Line Dépliable</a>
+  </div>
+
+  <!-- Top Navbar classique GenZstream (Aucune sidebar) -->
+  <nav class="top-nav">
+    <div class="nav-left">
+      <a href="/v1" class="nav-brand">
+        <img src="/logo.png" alt="GenZstream" />
+        <span class="nav-brand-title">GenZstream</span>
+      </a>
+      <div class="nav-links">
+        <a href="/v1" class="nav-link active">Accueil</a>
+        <a href="/catalog" class="nav-link">Catalogue</a>
+        <a href="javascript:void(0)" class="nav-link" onclick="setTab('dragon_ball')">Dragon Ball</a>
+        <a href="javascript:void(0)" class="nav-link" onclick="setTab('vf')">100% VF</a>
+        <a href="/random" class="nav-link">Au hasard</a>
+      </div>
+    </div>
+    <div class="nav-right">
+      <div class="search-bar">
+        <span>🔍</span>
+        <input type="text" id="searchInput" placeholder="Rechercher films, séries..." oninput="handleSearch(this.value)" />
+      </div>
+      <a href="https://t.me/ec4rlate" target="_blank" class="telegram-link">
+        Telegram
+      </a>
+    </div>
+  </nav>
+
+  <!-- Hero Spotlight -->
+  <section class="hero" id="heroBanner" style="background-image: url('https://s4.anilist.co/file/anilistcdn/media/anime/banner/16498-8jpFCOcDmneX.jpg');">
+    <div class="hero-content">
+      <div class="hero-badges">
+        <span class="badge-populaire">À la une</span>
+        <span class="badge-vf" id="heroVfBadge">VF DISPONIBLE</span>
+      </div>
+      <h1 class="hero-title" id="heroTitle">Attack on Titan</h1>
+      <p class="hero-synopsis" id="heroOverview">
+        L'humanité vit retranchée derrière d'immenses murs pour échapper aux Titans, de gigantesques créatures dévoreuses d'hommes.
+      </p>
+      <div class="hero-actions">
+        <button class="btn-play" id="heroPlayBtn" onclick="openPlayer(currentHero)">
+          ▶ Regarder maintenant
+        </button>
+        <button class="btn-details" onclick="openPlayer(currentHero)">
+          + Informations
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Onglets d'Univers (Intégrés sous le Hero) -->
+  <div class="tabs-bar-wrap">
+    <div class="tabs-bar">
+      <button class="tab-pill active" onclick="setTab('all', this)">Tout l'Accueil</button>
+      <button class="tab-pill" onclick="setTab('dragon_ball', this)">🐉 Univers Dragon Ball (39)</button>
+      <button class="tab-pill" onclick="setTab('vf', this)">🇫🇷 100% Français (VF)</button>
+      <button class="tab-pill" onclick="setTab('animes', this)">⚡ Animés</button>
+      <button class="tab-pill" onclick="setTab('movies', this)">🎬 Films</button>
+      <button class="tab-pill" onclick="setTab('series', this)">📺 Séries</button>
+    </div>
+  </div>
+
+  <!-- Rails de Carrousels -->
+  <main class="content-feed" id="feedContainer">
+    <div style="text-align: center; color: var(--color-doux); padding: 40px;">Chargement du catalogue...</div>
+  </main>
+
+  <!-- Modal Lecteur -->
+  <div id="modalOverlay" class="modal-overlay">
+    <div class="modal-container">
+      <button class="modal-close" onclick="closePlayer()">✕</button>
+      <div class="modal-aspect">
+        <iframe id="modalIframe" src="" allowfullscreen allow="autoplay; encrypted-media; fullscreen"></iframe>
+      </div>
+      <div class="modal-info">
+        <h2 id="modalTitle" style="font-size: 20px; font-weight: 800; margin-bottom: 6px;"></h2>
+        <p id="modalOverview" style="font-size: 13px; color: var(--color-doux); line-height: 1.5;"></p>
+        <div style="font-size: 13px; font-weight: 700; margin-top: 16px;">Lecteurs disponibles :</div>
+        <div class="sources-grid" id="modalSources"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div>Films, séries et animés, réunis au même endroit.</div>
+    <div>Contact : <a href="https://t.me/ec4rlate" target="_blank" style="color: var(--color-creme); text-decoration: none;">t.me/ec4rlate</a></div>
+  </footer>
+
+  <script>
+    let browseData = null;
+    let currentHero = null;
+    let activeTab = 'all';
+
+    async function init() {
+      try {
+        const res = await fetch('/api/v1/browse');
+        browseData = await res.json();
+
+        if (browseData.hero) {
+          currentHero = browseData.hero;
+          document.getElementById('heroTitle').textContent = browseData.hero.title;
+          document.getElementById('heroOverview').textContent = browseData.hero.overview || '';
+          if (browseData.hero.backdropPath) {
+            document.getElementById('heroBanner').style.backgroundImage = `url('${browseData.hero.backdropPath}')`;
+          }
+          if (browseData.hero.hasVf === false) {
+            document.getElementById('heroVfBadge').style.display = 'none';
+          }
+        }
+
+        renderRails();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function setTab(tab, btn) {
+      activeTab = tab;
+      if (btn) {
+        document.querySelectorAll('.tab-pill').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      }
+      renderRails();
+    }
+
+    function renderRails() {
+      if (!browseData || !browseData.rows) return;
+      const feed = document.getElementById('feedContainer');
+      feed.innerHTML = '';
+
+      let rows = browseData.rows;
+
+      if (activeTab === 'dragon_ball') {
+        rows = rows.filter(r => r.key === 'dragon_ball');
+      } else if (activeTab === 'vf') {
+        rows = rows.map(r => ({
+          ...r,
+          items: (r.items || []).filter(it => it.hasVf !== false)
+        })).filter(r => r.items.length > 0);
+      }
+
+      rows.forEach((r, rowIdx) => {
+        const items = r.items || [];
+        if (items.length === 0) return;
+
+        const block = document.createElement('section');
+        block.className = 'rail-block';
+
+        const rowTitle = r.key === 'dragon_ball' ? '⚡ Saga Dragon Ball Intégrale (39 titres)' : (r.title || 'Tendances');
+
+        block.innerHTML = `
+          <div class="rail-head">
+            <h2 class="rail-title">${rowTitle}</h2>
+            <div class="rail-arrows">
+              <button class="arrow-btn" onclick="scrollRail('slider_${rowIdx}', -400)">‹</button>
+              <button class="arrow-btn" onclick="scrollRail('slider_${rowIdx}', 400)">›</button>
+            </div>
+          </div>
+          <div class="rail-slider" id="slider_${rowIdx}"></div>
+        `;
+
+        feed.appendChild(block);
+        const slider = block.querySelector('.rail-slider');
+
+        items.forEach(it => {
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.onclick = () => openPlayer(it);
+
+          card.innerHTML = `
+            <div class="card-poster">
+              <img src="${it.posterPath || '/favicon.png'}" alt="${it.title}" loading="lazy" />
+              <div class="card-badges">
+                ${it.hasVf !== false ? '<span class="badge-vf">VF</span>' : ''}
+                <span class="badge-vostfr">VOSTFR</span>
+              </div>
+            </div>
+            <div class="card-info">
+              <div class="card-title">${it.title}</div>
+              <div class="card-meta">
+                <span>${it.releaseYear || ''}</span>
+                <span>${it.mediaType === 'movie' ? 'Film' : (it.episodes ? it.episodes + ' ép.' : 'Série')}</span>
+              </div>
+            </div>
+          `;
+          slider.appendChild(card);
+        });
+      });
+    }
+
+    function scrollRail(id, amount) {
+      const el = document.getElementById(id);
+      if (el) el.scrollBy({ left: amount, behavior: 'smooth' });
+    }
+
+    function handleSearch(q) {
+      if (!q.trim()) {
+        renderRails();
+        return;
+      }
+      const val = q.toLowerCase();
+      const filtered = browseData.rows.map(r => ({
+        ...r,
+        items: (r.items || []).filter(it => it.title && it.title.toLowerCase().includes(val))
+      })).filter(r => r.items.length > 0);
+
+      const feed = document.getElementById('feedContainer');
+      feed.innerHTML = '';
+      filtered.forEach((r, rowIdx) => {
+        const block = document.createElement('section');
+        block.className = 'rail-block';
+        block.innerHTML = `
+          <div class="rail-head"><h2 class="rail-title">${r.title || 'Résultats'}</h2></div>
+          <div class="rail-slider" id="search_slider_${rowIdx}"></div>
+        `;
+        feed.appendChild(block);
+        const slider = block.querySelector('.rail-slider');
+        r.items.forEach(it => {
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.onclick = () => openPlayer(it);
+          card.innerHTML = `
+            <div class="card-poster"><img src="${it.posterPath || '/favicon.png'}" /></div>
+            <div class="card-info"><div class="card-title">${it.title}</div></div>
+          `;
+          slider.appendChild(card);
+        });
+      });
+    }
+
+    async function openPlayer(media) {
+      const overlay = document.getElementById('modalOverlay');
+      const title = document.getElementById('modalTitle');
+      const overview = document.getElementById('modalOverview');
+      const iframe = document.getElementById('modalIframe');
+      const sources = document.getElementById('modalSources');
+
+      title.textContent = media.title;
+      overview.textContent = media.overview || '';
+      iframe.src = '';
+      sources.innerHTML = '<span style="color:var(--color-doux);font-size:12px;">Chargement des flux...</span>';
+      overlay.classList.add('open');
+
+      try {
+        const res = await fetch(`/api/v1/media/${media.mediaType || 'tv'}/${media.tmdbId}/links?season=1&episodeId=1`);
+        const data = await res.json();
+        const links = data.links || [];
+
+        sources.innerHTML = '';
+        links.forEach((l, idx) => {
+          const btn = document.createElement('button');
+          btn.className = `source-btn ${idx === 0 ? 'active' : ''}`;
+          btn.textContent = `▶ ${l.name}`;
+          btn.onclick = async () => {
+            document.querySelectorAll('.source-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const playRes = await fetch(`/api/v1/play/${l.id}`);
+            const playData = await playRes.json();
+            if (playData.url) iframe.src = playData.url;
+          };
+          sources.appendChild(btn);
+
+          if (idx === 0) btn.click();
+        });
+      } catch (e) {
+        sources.innerHTML = 'Erreur';
+      }
+    }
+
+    function closePlayer() {
+      document.getElementById('modalOverlay').classList.remove('open');
+      document.getElementById('modalIframe').src = '';
+    }
+
+    init();
+  </script>
+</body>
+</html>
