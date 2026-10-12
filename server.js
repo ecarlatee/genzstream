@@ -114,7 +114,7 @@ function formatMediaDetail(it) {
     audiodescription: false,
     hauteQualite: true,
     hasLinks: true,
-    languages: ['VF', 'VOSTFR'],
+    languages: (it.kind === 'animes' && it.hasVf === false) ? ['VOSTFR'] : ['VF', 'VOSTFR'],
     seasons,
     reviewCount: 18,
     reviewAverage: it.voteAverage || 8.2,
@@ -175,7 +175,7 @@ function generateAnnexes(it) {
       { id: 10, name: 'Studio / Réalisateur', job: 'Réalisateur', profilePath: null }
     ],
     similar: similarItems,
-    saga: null
+    saga: { saga: null, ordres: [], items: [] }
   };
 }
 
@@ -276,8 +276,13 @@ async function getAnimeSamaSlug(title) {
     'sword art online': 'sword-art-online',
     'vinland saga': 'vinland-saga',
     'black clover': 'black-clover',
+    'dragon ball': 'dragon-ball',
     'dragon ball z': 'dragon-ball-z',
-    'dragon ball super': 'dragon-ball-super'
+    'dragon ball gt': 'dragon-ball-gt',
+    'dragon ball super': 'dragon-ball-super',
+    'dragon ball daima': 'dragon-ball-daima',
+    'dragon ball z kai': 'dragon-ball-z',
+    'super dragon ball heroes': 'super-dragon-ball-heroes'
   };
 
   for (const [key, slug] of Object.entries(directMap)) {
@@ -319,25 +324,44 @@ async function getAnimeSamaSlug(title) {
 
 async function extractVidmolyM3u8(link) {
   if (!link) return null;
-  const idMatch = link.match(/embed-([a-zA-Z0-9]+)\.html/);
-  if (!idMatch) return null;
-  const id = idMatch[1];
-  const embedUrl = `https://vidmoly.biz/embed-${id}.html`;
+  // 1. Try direct fetch on the link (works for ansembed.net, vidmoly.me, etc.)
   try {
-    const res = await fetch(embedUrl, {
+    const res = await fetch(link, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         'Referer': 'https://anime-sama.to/'
       },
       signal: AbortSignal.timeout(5000)
     });
-    if (!res.ok) return null;
-    const html = await res.text();
-    const m3u8Match = html.match(/file:\s*["']([^"']+\.m3u8[^"']*)["']/i);
-    return m3u8Match ? m3u8Match[1] : null;
-  } catch (e) {
-    return null;
+    if (res.ok) {
+      const html = await res.text();
+      const m3u8Match = html.match(/file:\s*["']([^"']+\.m3u8[^"']*)["']/i) || html.match(/(https?:\/\/[^"'\s]+\.m3u8[^"'\s]*)/i);
+      if (m3u8Match) return m3u8Match[1];
+    }
+  } catch (e) {}
+
+  const idMatch = link.match(/embed-([a-zA-Z0-9]+)\.html/);
+  if (!idMatch) return null;
+  const id = idMatch[1];
+  const domains = ['https://vidmoly.biz', 'https://vidmoly.me', 'https://vmpx.online'];
+  for (const dom of domains) {
+    try {
+      const embedUrl = `${dom}/embed-${id}.html`;
+      const res = await fetch(embedUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          'Referer': 'https://anime-sama.to/'
+        },
+        signal: AbortSignal.timeout(5000)
+      });
+      if (res.ok) {
+        const html = await res.text();
+        const m3u8Match = html.match(/file:\s*["']([^"']+\.m3u8[^"']*)["']/i) || html.match(/(https?:\/\/[^"'\s]+\.m3u8[^"'\s]*)/i);
+        if (m3u8Match) return m3u8Match[1];
+      }
+    } catch (e) {}
   }
+  return null;
 }
 
 async function resolveAnimeVfStream(title, season = 1, episodeNumber = 1) {
@@ -589,7 +613,7 @@ function generateLinks(it, season = 1, episodeNumber = 1) {
   const tmdbId = it.tmdbId;
 
   if (isAnime) {
-    return [
+    const links = [
       {
         id: `genzhd_${tmdbId}_${season}_${episodeNumber}_vostfr`,
         name: 'Lecteur 1 · GenZ HD (VOSTFR)',
@@ -607,35 +631,43 @@ function generateLinks(it, season = 1, episodeNumber = 1) {
         quality: '1080p',
         zplayer: true,
         hasLinks: true
-      },
-      {
-        id: `genzvf_${tmdbId}_${season}_${episodeNumber}_vf`,
-        name: 'Lecteur 1 · GenZ HD (VF)',
-        provider: 'genzvf',
-        language: 'VF',
-        quality: '1080p',
-        zplayer: true,
-        hasLinks: true
-      },
-      {
-        id: `vidsrc_${tmdbId}_${season}_${episodeNumber}_vf`,
-        name: 'Lecteur 2 · VidSrc HD (VF)',
-        provider: 'vidsrc',
-        language: 'VF',
-        quality: '1080p',
-        zplayer: true,
-        hasLinks: true
-      },
-      {
-        id: `genzhd_${tmdbId}_${season}_${episodeNumber}_va`,
-        name: 'Lecteur 3 · GenZ HD (Version Anglaise / Dub)',
-        provider: 'genzhd',
-        language: 'VO',
-        quality: '1080p',
-        zplayer: true,
-        hasLinks: true
       }
     ];
+
+    if (it.hasVf !== false) {
+      links.push(
+        {
+          id: `genzvf_${tmdbId}_${season}_${episodeNumber}_vf`,
+          name: 'Lecteur 1 · GenZ HD (VF)',
+          provider: 'genzvf',
+          language: 'VF',
+          quality: '1080p',
+          zplayer: true,
+          hasLinks: true
+        },
+        {
+          id: `vidsrc_${tmdbId}_${season}_${episodeNumber}_vf`,
+          name: 'Lecteur 2 · VidSrc HD (VF)',
+          provider: 'vidsrc',
+          language: 'VF',
+          quality: '1080p',
+          zplayer: true,
+          hasLinks: true
+        }
+      );
+    }
+
+    links.push({
+      id: `genzhd_${tmdbId}_${season}_${episodeNumber}_va`,
+      name: 'Lecteur 3 · GenZ HD (Version Anglaise / Dub)',
+      provider: 'genzhd',
+      language: 'VO',
+      quality: '1080p',
+      zplayer: true,
+      hasLinks: true
+    });
+
+    return links;
   }
 
   if (isMovie) {
@@ -1075,59 +1107,79 @@ const server = http.createServer(async (req, res) => {
   if (mediaMatch) {
     const [, mediaType, idStr, subResource] = mediaMatch;
     const tmdbId = parseInt(idStr, 10);
-    const item = itemsMap.get(`${mediaType}:${tmdbId}`) || itemsMap.get(idStr);
+    let item = itemsMap.get(`${mediaType}:${tmdbId}`) || itemsMap.get(idStr);
 
-    if (item) {
-      if (subResource === 'episodes') {
-        const season = parseInt(parsedUrl.searchParams.get('season') || '1', 10);
-        return sendJson(res, generateEpisodes(item, season));
-      }
-      if (subResource === 'reviews') {
-        return sendJson(res, {
-          reviews: [
-            {
-              id: `rev_${item.tmdbId}_1`,
-              rating: Math.round(item.voteAverage || 8),
-              comment: "Excellente œuvre disponible sur GenZstream !",
-              author: "Membre GenZ",
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              likes: 15,
-              userLiked: false
-            }
-          ],
-          viewerReview: null
-        });
-      }
-      if (subResource === 'annexes') {
-        return sendJson(res, generateAnnexes(item));
-      }
-      if (subResource === 'cast') {
-        return sendJson(res, { cast: [], realisation: [] });
-      }
-      if (subResource === 'similar') {
-        const annexes = generateAnnexes(item);
-        return sendJson(res, { items: annexes.similar });
-      }
-      if (subResource === 'saga') {
-        return sendJson(res, { saga: null, ordres: [], items: [] });
-      }
-      if (subResource === 'trailer') {
-        return sendJson(res, { youtubeId: item.youtubeId || null });
-      }
-      if (subResource === 'links') {
-        const season = parseInt(parsedUrl.searchParams.get('season') || '1', 10);
-        const episodeId = parsedUrl.searchParams.get('episodeId') || '';
-        const epMatch = episodeId.match(/E(\d+)/i);
-        const episodeNumber = epMatch ? parseInt(epMatch[1], 10) : (parseInt(episodeId, 10) || 1);
-        return sendJson(res, { links: generateLinks(item, season, episodeNumber) });
-      }
-
-      // Root media detail
-      if (!subResource) {
-        return sendJson(res, formatMediaDetail(item));
-      }
+    if (!item) {
+      item = {
+        tmdbId,
+        mediaType,
+        kind: mediaType === 'movie' ? 'films' : 'series',
+        title: `Œuvre #${tmdbId}`,
+        posterPath: null,
+        backdropPath: null,
+        logoPath: null,
+        releaseYear: 2023,
+        voteAverage: 8.0,
+        genres: ['Action', 'Aventure'],
+        overview: 'Contenu disponible en streaming sur GenZstream.',
+        episodes: mediaType === 'movie' ? 1 : 12,
+        hasLinks: true,
+        hasVf: false
+      };
     }
+
+    if (subResource === 'episodes') {
+      const season = parseInt(parsedUrl.searchParams.get('season') || '1', 10);
+      return sendJson(res, generateEpisodes(item, season));
+    }
+    if (subResource === 'reviews') {
+      return sendJson(res, {
+        reviews: [
+          {
+            id: `rev_${item.tmdbId}_1`,
+            rating: Math.round(item.voteAverage || 8),
+            comment: "Excellente œuvre disponible sur GenZstream !",
+            author: "Membre GenZ",
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            likes: 15,
+            userLiked: false
+          }
+        ],
+        viewerReview: null
+      });
+    }
+    if (subResource === 'annexes') {
+      return sendJson(res, generateAnnexes(item));
+    }
+    if (subResource === 'cast') {
+      return sendJson(res, { cast: [], realisation: [] });
+    }
+    if (subResource === 'similar') {
+      const annexes = generateAnnexes(item);
+      return sendJson(res, { items: annexes.similar });
+    }
+    if (subResource === 'saga') {
+      return sendJson(res, { saga: null, ordres: [], items: [] });
+    }
+    if (subResource === 'trailer') {
+      return sendJson(res, { youtubeId: item.youtubeId || null });
+    }
+    if (subResource === 'links') {
+      const season = parseInt(parsedUrl.searchParams.get('season') || '1', 10);
+      const episodeId = parsedUrl.searchParams.get('episodeId') || '';
+      const epMatch = episodeId.match(/E(\d+)/i);
+      const episodeNumber = epMatch ? parseInt(epMatch[1], 10) : (parseInt(episodeId, 10) || 1);
+      return sendJson(res, { links: generateLinks(item, season, episodeNumber) });
+    }
+
+    // Root media detail
+    if (!subResource) {
+      return sendJson(res, formatMediaDetail(item));
+    }
+
+    // Any other subResource for this media (e.g. watchlist, favorite, report)
+    return sendJson(res, { ok: true });
   }
 
   // Video playback token
@@ -1375,14 +1427,122 @@ const server = http.createServer(async (req, res) => {
     return sendJson(res, { ok: true, message: 'Demande enregistrée !' });
   }
 
-  // Fallback proxy to remote backend
-  if (pathname.startsWith('/api/')) {
-    return proxyRequest(req, res, 'heiwastream.fr', pathname + parsedUrl.search);
+  // Analytics beacon
+  if (pathname === '/api/v1/audience') {
+    return sendJson(res, { ok: true });
   }
 
-  // Proxy Stremio routes if called
-  if (pathname.startsWith('/stremio/')) {
-    return proxyRequest(req, res, 'api.heiwastream.fr', pathname + parsedUrl.search);
+  // Badges
+  if (pathname.startsWith('/api/v1/badges')) {
+    return sendJson(res, { badges: [] });
+  }
+
+  // Profiles
+  if (pathname.startsWith('/api/v1/profiles')) {
+    if (pathname.includes('/reviews')) {
+      return sendJson(res, { reviews: [] });
+    }
+    const slug = pathname.replace('/api/v1/profiles/', '').split('?')[0] || 'Membre';
+    return sendJson(res, {
+      user: {
+        id: '1',
+        userId: '1',
+        username: slug === 'me' ? 'Membre' : slug,
+        globalName: slug === 'me' ? 'Membre GenZ' : slug,
+        avatar: null,
+        isOwner: false,
+        watchlist: [],
+        favorites: [],
+        createdAt: new Date().toISOString()
+      }
+    });
+  }
+
+  // Sagas & Univers
+  if (pathname === '/api/v1/sagas' || pathname === '/api/v1/univers') {
+    return sendJson(res, { sagas: [], univers: [], results: [] });
+  }
+
+  // Persons / Cast
+  if (pathname.startsWith('/api/v1/person/')) {
+    const personId = pathname.replace('/api/v1/person/', '').split('?')[0];
+    return sendJson(res, {
+      person: {
+        id: personId,
+        name: 'Artiste',
+        biography: 'Biographie à venir.',
+        profilePath: null,
+        knownFor: []
+      }
+    });
+  }
+  if (pathname === '/api/v1/search/personnes') {
+    return sendJson(res, { results: [] });
+  }
+
+  // Generiques (skip intro / outro)
+  if (pathname.startsWith('/api/v1/generiques')) {
+    return sendJson(res, { intro: null, outro: null });
+  }
+
+  // Notifications
+  if (pathname.startsWith('/api/v1/notifications')) {
+    return sendJson(res, { actif: false, abonnements: [] });
+  }
+
+  // User settings, sessions, 2FA, integrations
+  if (
+    pathname.startsWith('/api/me/') ||
+    pathname.startsWith('/api/auth/2fa')
+  ) {
+    if (pathname === '/api/me/preferences') {
+      return sendJson(res, { preferences: {} });
+    }
+    if (pathname === '/api/me/integrations') {
+      return sendJson(res, { letterboxd: null });
+    }
+    if (pathname === '/api/me/sessions') {
+      return sendJson(res, { sessions: [] });
+    }
+    if (pathname.startsWith('/api/me/2fa')) {
+      return sendJson(res, { actif: false });
+    }
+    return sendJson(res, { ok: true });
+  }
+
+  // Internal team & moderation stubs
+  if (pathname.startsWith('/api/v1/internal/')) {
+    return sendJson(res, { ok: true, items: [], stats: {}, requests: [], blames: [] });
+  }
+
+  // Seance & Rooms
+  if (pathname.startsWith('/api/v1/seance')) {
+    return sendJson(res, { ok: true, possible: true, langues: ['VF', 'VOSTFR'] });
+  }
+
+  // Flux & Player incidents
+  if (
+    pathname.startsWith('/api/v1/flux') ||
+    pathname === '/api/v1/lecteur/incident' ||
+    pathname.startsWith('/api/v1/embed/')
+  ) {
+    return sendJson(res, { ok: true });
+  }
+
+  // Server-Sent Events / Events
+  if (pathname === '/api/events') {
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Origin': '*'
+    });
+    return res.end('event: ping\ndata: {}\n\n');
+  }
+
+  // Catch-all for any unhandled /api/ route: NEVER proxy to heiwastream.fr, return safe JSON!
+  if (pathname.startsWith('/api/')) {
+    return sendJson(res, { ok: true });
   }
 
   // Handle /sw.js - do not allow registering HTML as ServiceWorker
