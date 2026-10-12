@@ -1175,13 +1175,16 @@ const server = http.createServer(async (req, res) => {
         reviews: [
           {
             id: `rev_${item.tmdbId}_1`,
-            rating: Math.round(item.voteAverage || 8),
+            rating: Math.min(5, Math.max(1, Math.round((item.voteAverage || 8) / 2))),
             comment: "Excellente œuvre disponible sur GenZstream !",
+            username: "Membre GenZ",
             author: "Membre GenZ",
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
+            profileSlug: null,
+            createdAt: "Récemment",
+            updatedAt: "Récemment",
             likes: 15,
-            userLiked: false
+            userLiked: false,
+            spoiler: false
           }
         ],
         viewerReview: null
