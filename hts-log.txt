@@ -1,0 +1,17 @@
+HTTrack3.49-5 launched on Sun, 11 Oct 2026 21:09:58 at https://heiwastream.fr +*.png +*.gif +*.jpg +*.jpeg +*.css +*.js -ad.doubleclick.net/*
+(webhttrack -q -%i -w https://heiwastream.fr -O "/home/ecarlate/Documents/Info/Websites-Projects/GenZstream" -n -%P -N0 -s2 -p7 -D -a -K0 -c4 -%k -A100000 -F "Mozilla/4.5 (compatible; HTTrack 3.0x; Windows 98)" -%F "<!-- Mirrored from %s%s by HTTrack Website Copier/3.x [XR&CO'2014], %s -->" +*.png +*.gif +*.jpg +*.jpeg +*.css +*.js -ad.doubleclick.net/* -%s -%u )
+
+Information, Warnings and Errors reported for this mirror:
+note:	the hts-log.txt file, and hts-cache folder, may contain sensitive information,
+	such as username/password authentication for websites mirrored in this project
+	do not share these files/folders if you want these information to remain private
+
+21:10:14	Error: 	"Not Found" (404) at link https://image.tmdb.org/ (from https://heiwastream.fr/)
+21:10:15	Error: 	"Not Found" (404) at link https://www.youtube-nocookie.com/ (from https://heiwastream.fr/)
+21:10:15	Warning: 	File seems complete (same size), but there was a cache read error (4294967295): https://heiwastream.fr/secours.js
+21:10:16	Warning: 	File seems complete (same size), but there was a cache read error (4294967295): https://heiwastream.fr/assets/instrument-sans-latin-wght-normal-fpxmccl5.woff2
+21:10:19	Warning: 	File seems complete (same size), but there was a cache read error (4294967295): https://heiwastream.fr/assets/archivo-latin-wght-normal-kkdydwld.woff2
+21:10:21	Warning: 	File seems complete (same size), but there was a cache read error (4294967295): https://heiwastream.fr/cdn-cgi/challenge-platform/h/g/scripts/jsd/4df4a60fa397/main.js?
+
+HTTrack Website Copier/3.49-5 mirror complete in 24 seconds : 21 links scanned, 20 files written (1249716 bytes overall) [533911 bytes received at 22246 bytes/sec], 1258424 bytes transferred using HTTP compression in 23 files, ratio 39%, 3.4 requests per connection
+(2 errors, 4 warnings, 0 messages)

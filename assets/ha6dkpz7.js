@@ -1,0 +1,1 @@
+import{r}from"./il30qalw.js";function f(t,n){const e=r.useRef(null),s=r.useRef(t);return s.current=t,r.useEffect(()=>{if(!n||!e.current)return;const c=new IntersectionObserver(u=>{u.some(o=>o.isIntersecting)&&s.current()},{rootMargin:"600px 0px"});return c.observe(e.current),()=>c.disconnect()},[n]),e}export{f as u};

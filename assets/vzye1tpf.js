@@ -1,0 +1,1 @@
+function r(n){const t=[...n];for(let a=t.length-1;a>0;a--){const o=Math.floor(Math.random()*(a+1));[t[a],t[o]]=[t[o],t[a]]}return t}function e(n){return n[Math.floor(Math.random()*n.length)]}export{e as a,r as m};

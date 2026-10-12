@@ -1,0 +1,17 @@
+{
+  "name": "genzstream",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "GenZstream - Service de streaming francophone",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "genzstream",
+    "streaming"
+  ],
+  "author": "genzstream",
+  "license": "ISC"
+}

@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta name="color-scheme" content="dark" />
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(regs) {
+          for (var r of regs) r.unregister();
+        });
+      }
+      if ('caches' in window) {
+        caches.keys().then(function(names) {
+          for (var name of names) caches.delete(name);
+        });
+      }
+    </script>
+    
+    <meta name="theme-color" content="#0a0a0a" />
+    
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="GenZstream" />
+
+    
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <title>GenZstream · Films, séries et animés en streaming</title>
+    <meta
+      name="description"
+      content="Regarde films, séries et animés en streaming : lecteur intégré, fiches complètes, listes, recommandations et avis."
+    />
+    
+    <link rel="canonical" href="index.html" />
+
+    
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="GenZstream" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:url" content="index.html" />
+    <meta property="og:title" content="GenZstream · Films, séries et animés en streaming" />
+    <meta
+      property="og:description"
+      content="Regarde films, séries et animés en streaming : lecteur intégré, fiches complètes, listes et recommandations."
+    />
+    
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="GenZstream · Films, séries et animés en streaming" />
+    <meta
+      name="twitter:description"
+      content="Regarde films, séries et animés en streaming : lecteur intégré, fiches complètes, listes et recommandations."
+    />
+
+    <link rel="icon" href="favicon.png" type="image/png" sizes="64x64" />
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+    <link rel="manifest" href="site.webmanifest" />
+
+    
+    <link rel="preconnect" href="https://image.tmdb.org" crossorigin />
+
+    
+    <link rel="dns-prefetch" href="https://www.youtube-nocookie.com" />
+
+    
+
+    
+
+    
+    <script src="/secours.js" defer></script>
+
+    
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "#site",
+            "name": "GenZstream",
+            "url": "/",
+            "inLanguage": "fr-FR",
+            "publisher": { "@id": "#org" },
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": {
+                "@type": "EntryPoint",
+                "urlTemplate": "/search?q={search_term_string}"
+              },
+              "query-input": "required name=search_term_string"
+            }
+          },
+          {
+            "@type": "Organization",
+            "@id": "#org",
+            "name": "GenZstream",
+            "url": "/",
+            "logo": "/icon-512.png",
+            "description": "GenZstream est un service de streaming francophone gratuit : films, séries et animés regardables dans un lecteur intégré sans aucune publicité, en VF et VOSTFR, avec fiches détaillées, listes personnelles, avis et recommandations. Sans abonnement, sans compte obligatoire et sans donnée bancaire. GenZstream n'héberge aucune vidéo : il référence des sources hébergées ailleurs et les lit dans son propre lecteur.",
+            "areaServed": "FR",
+            "knowsLanguage": "fr-FR"
+          },
+          {
+            "@type": "WebApplication",
+            "@id": "#app",
+            "name": "GenZstream Web App",
+            "url": "/",
+            "applicationCategory": "MultimediaApplication",
+            "operatingSystem": "navigateur web, Android, iOS, Windows, macOS, Linux",
+            "inLanguage": "fr-FR",
+            "publisher": { "@id": "#org" },
+            "description": "GenZstream : plateforme de streaming complète pour films, séries et plus de 1000 animés japonais en haute qualité, VF et VOSTFR.",
+            "featureList": [
+              "Catalogue riche de plus de 1000 animés, films et séries",
+              "Lecteur vidéo intégré fluide et sans publicité intempestive",
+              "Sélection par saisons et épisodes avec fiches détaillées",
+              "Recherche instantanée et filtres par genre",
+              "Support VF et VOSTFR",
+              "Accessible sur mobile, tablette et ordinateur"
+            ],
+            "offers": {
+              "@type": "Offer",
+              "price": 0,
+              "priceCurrency": "EUR",
+              "availability": "https://schema.org/InStock",
+              "category": "free"
+            }
+          }
+        ]
+      }
+    </script>
+    <script type="module" crossorigin src="/assets/bo4866ec.js?v=2"></script>
+    <link rel="modulepreload" crossorigin href="/assets/il30qalw.js">
+    <link rel="modulepreload" crossorigin href="/assets/iyuzmj8o.js">
+    <link rel="modulepreload" crossorigin href="/assets/krrbl36g.js">
+    <link rel="stylesheet" crossorigin href="/assets/f3jcgis3.css">
+      <link rel="preload" href="/assets/instrument-sans-latin-wght-normal-fpxmccl5.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/assets/archivo-latin-wght-normal-kkdydwld.woff2" as="font" type="font/woff2" crossorigin />
+  </head>
+  <body>
+    <div id="root"></div>
+</body>
+</html>
