@@ -114,7 +114,7 @@ function formatMediaDetail(it) {
     audiodescription: false,
     hauteQualite: true,
     hasLinks: true,
-    languages: (it.kind === 'animes' && it.hasVf === false) ? ['VOSTFR'] : ['VF', 'VOSTFR'],
+    languages: (it.hasVf === false) ? ['VOSTFR'] : ['VF', 'VOSTFR'],
     seasons,
     reviewCount: 18,
     reviewAverage: it.voteAverage || 8.2,
@@ -671,19 +671,22 @@ function generateLinks(it, season = 1, episodeNumber = 1) {
   }
 
   if (isMovie) {
-    return [
-      {
+    const movieLinks = [];
+    if (it.hasVf !== false) {
+      movieLinks.push({
         id: `vidsrc_${tmdbId}_1_1_vf`,
-        name: 'Lecteur 1 · VidSrc HD (VF / VOSTFR)',
+        name: 'Lecteur 1 · VidSrc HD (VF)',
         provider: 'vidsrc',
         language: 'VF',
         quality: '1080p',
         zplayer: true,
         hasLinks: true
-      },
+      });
+    }
+    movieLinks.push(
       {
         id: `vidsrcpm_${tmdbId}_1_1_vostfr`,
-        name: 'Lecteur 2 · VidSrc PM (VF / Multi)',
+        name: 'Lecteur 2 · VidSrc PM (VOSTFR / Multi)',
         provider: 'vidsrcpm',
         language: 'VOSTFR',
         quality: '1080p',
@@ -692,7 +695,7 @@ function generateLinks(it, season = 1, episodeNumber = 1) {
       },
       {
         id: `autoembed_${tmdbId}_1_1_multi`,
-        name: 'Lecteur 3 · AutoEmbed (Multi)',
+        name: 'Lecteur 3 · AutoEmbed (VOSTFR / Multi)',
         provider: 'autoembed',
         language: 'VOSTFR',
         quality: '1080p',
@@ -701,29 +704,33 @@ function generateLinks(it, season = 1, episodeNumber = 1) {
       },
       {
         id: `vidlink_${tmdbId}_1_1_multi`,
-        name: 'Lecteur 4 · VidLink HD (Multi)',
+        name: 'Lecteur 4 · VidLink HD (VOSTFR / Multi)',
         provider: 'vidlink',
         language: 'VOSTFR',
         quality: '1080p',
         zplayer: true,
         hasLinks: true
       }
-    ];
+    );
+    return movieLinks;
   }
 
-  return [
-    {
+  const seriesLinks = [];
+  if (it.hasVf !== false) {
+    seriesLinks.push({
       id: `vidsrc_${tmdbId}_${season}_${episodeNumber}_vf`,
-      name: 'Lecteur 1 · VidSrc HD (VF / VOSTFR)',
+      name: 'Lecteur 1 · VidSrc HD (VF)',
       provider: 'vidsrc',
       language: 'VF',
       quality: '1080p',
       zplayer: true,
       hasLinks: true
-    },
+    });
+  }
+  seriesLinks.push(
     {
       id: `vidsrcpm_${tmdbId}_${season}_${episodeNumber}_vostfr`,
-      name: 'Lecteur 2 · VidSrc PM (VF / Multi)',
+      name: 'Lecteur 2 · VidSrc PM (VOSTFR / Multi)',
       provider: 'vidsrcpm',
       language: 'VOSTFR',
       quality: '1080p',
@@ -732,7 +739,7 @@ function generateLinks(it, season = 1, episodeNumber = 1) {
     },
     {
       id: `autoembed_${tmdbId}_${season}_${episodeNumber}_multi`,
-      name: 'Lecteur 3 · AutoEmbed (Multi)',
+      name: 'Lecteur 3 · AutoEmbed (VOSTFR / Multi)',
       provider: 'autoembed',
       language: 'VOSTFR',
       quality: '1080p',
@@ -741,14 +748,15 @@ function generateLinks(it, season = 1, episodeNumber = 1) {
     },
     {
       id: `vidlink_${tmdbId}_${season}_${episodeNumber}_multi`,
-      name: 'Lecteur 4 · VidLink HD (Multi)',
+      name: 'Lecteur 4 · VidLink HD (VOSTFR / Multi)',
       provider: 'vidlink',
       language: 'VOSTFR',
       quality: '1080p',
       zplayer: true,
       hasLinks: true
     }
-  ];
+  );
+  return seriesLinks;
 }
 
 function getRandomItems(count = 14, kind = null, genre = null) {
@@ -1598,10 +1606,10 @@ const server = http.createServer(async (req, res) => {
     });
   }
 
-  // Handle /sw.js - do not allow registering HTML as ServiceWorker
-  if (pathname === '/sw.js') {
-    res.writeHead(404, { 'Content-Type': 'text/plain' });
-    return res.end('Not Found');
+  // Front telemetry beacon
+  if (pathname === '/mesure-front') {
+    res.writeHead(204, { 'Access-Control-Allow-Origin': '*' });
+    return res.end();
   }
 
   // Resolve static file path
@@ -1639,7 +1647,9 @@ const server = http.createServer(async (req, res) => {
       }
       res.writeHead(200, {
         'Content-Type': 'text/html; charset=utf-8',
-        'Cache-Control': 'no-cache, no-store, must-revalidate'
+        'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+        'Pragma': 'no-cache',
+        'Expires': '0'
       });
       res.end(html);
     });
