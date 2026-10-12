@@ -1060,15 +1060,66 @@ const server = http.createServer(async (req, res) => {
   // Serve Browse (Home page catalogue)
   if (pathname === '/api/v1/browse') {
     if (catalogueData && catalogueData.browse) {
-      const browse = {
-        hero: catalogueData.browse.hero || null,
-        perso: catalogueData.browse.perso || { reprendre: [], favoris: [], historique: [] },
-        rows: (catalogueData.browse.rows || []).map((r, idx) => ({
+      const allItems = catalogueData.all_items || [];
+      const dbItems = allItems.filter(it => it.title && it.title.toLowerCase().includes('dragon ball'));
+      
+      // Top 10 items for the ranked row (high rating, has both poster and backdrop)
+      const top10Candidates = allItems
+        .filter(it => it.voteAverage >= 8.0 && it.posterPath && it.backdropPath && !it.title.toLowerCase().includes('dragon ball'))
+        .slice(0, 9);
+      
+      const dbzItem = dbItems.find(it => it.title.toLowerCase() === 'dragon ball z') || dbItems[0];
+      const top10Items = [dbzItem, ...top10Candidates].filter(Boolean).slice(0, 10);
+
+      // Featured titles for multi-hero switcher (perso.vedettes)
+      const vedettesCandidates = allItems.filter(it => it.backdropPath && it.posterPath && it.voteAverage >= 8.2);
+      const vedettes = [
+        allItems.find(it => it.title === 'Attack on Titan') || vedettesCandidates[0],
+        dbzItem,
+        allItems.find(it => it.title === 'ONE PIECE') || vedettesCandidates[1],
+        allItems.find(it => it.title === 'Demon Slayer: Kimetsu no Yaiba') || vedettesCandidates[2],
+        allItems.find(it => it.title === 'JUJUTSU KAISEN') || vedettesCandidates[3],
+        allItems.find(it => it.title === 'Death Note') || vedettesCandidates[4]
+      ].filter(Boolean);
+
+      const existingRows = catalogueData.browse.rows || [];
+      const rows = [];
+      
+      // 1. Top 10 en France (ranked: true activates the large numbered cards)
+      rows.push({
+        key: 'top_10',
+        titre: 'Top 10 en France aujourd\'hui',
+        ranked: true,
+        items: top10Items
+      });
+
+      // 2. Saga Dragon Ball (39 titles)
+      rows.push({
+        key: 'dragon_ball',
+        titre: 'Saga Dragon Ball : Séries, Films & OAV',
+        items: dbItems
+      });
+
+      // 3. Other curated rows
+      for (const r of existingRows) {
+        if (r.key === 'dragon_ball') continue;
+        rows.push({
           ...r,
-          key: r.key || r.slug || `row_${idx}`,
-          titre: r.titre || r.label || 'Rangée',
+          key: r.key || r.slug,
+          titre: r.titre || r.label || 'Tendances',
           items: r.items || []
-        }))
+        });
+      }
+
+      const browse = {
+        hero: vedettes[0] || catalogueData.browse.hero || null,
+        perso: {
+          reprendre: [],
+          favoris: [],
+          historique: [],
+          vedettes
+        },
+        rows
       };
       return sendJson(res, browse);
     }
