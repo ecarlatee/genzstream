@@ -1,0 +1,621 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="color-scheme" content="dark" />
+  <title>GenZstream · Architecture 3 : Bento Grid 2026</title>
+  <link rel="icon" href="/favicon.png" type="image/png" sizes="64x64" />
+  <link rel="stylesheet" href="/assets/f3jcgis3.css" />
+  <style>
+    :root {
+      --bg: #0b0c10;
+      --card-bg: rgba(22, 25, 37, 0.75);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --accent: #8b5cf6;
+      --accent-vf: #10b981;
+      --accent-db: #f59e0b;
+      --text: #f9fafb;
+      --muted: #9ca3af;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Instrument Sans", sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Switcher Bar */
+    .style-switcher {
+      background: #050608;
+      border-bottom: 1px solid var(--card-border);
+      padding: 6px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      overflow-x: auto;
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .style-switcher span { color: var(--muted); font-weight: 600; text-transform: uppercase; }
+    .style-switcher a {
+      color: var(--muted);
+      text-decoration: none;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.04);
+      transition: all 0.2s;
+    }
+    .style-switcher a:hover { background: rgba(255,255,255,0.12); color: #fff; }
+    .style-switcher a.active {
+      background: var(--accent);
+      color: #fff;
+      font-weight: 700;
+      box-shadow: 0 0 10px rgba(139, 92, 246, 0.4);
+    }
+
+    /* Header */
+    .header {
+      padding: 18px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--card-border);
+    }
+    .logo-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: #fff;
+    }
+    .logo-brand img {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+    }
+    .brand-title {
+      font-size: 20px;
+      font-weight: 900;
+    }
+    .brand-bento-tag {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Main Bento Container */
+    .bento-wrapper {
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 30px 24px 60px;
+    }
+
+    /* Bento Grid */
+    .bento-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 20px;
+    }
+
+    .bento-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      overflow: hidden;
+      position: relative;
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s, box-shadow 0.25s;
+    }
+    .bento-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    }
+
+    /* Card 1: Hero Spotlight (Span 8 cols, row span 2) */
+    .bento-hero {
+      grid-column: span 8;
+      grid-row: span 2;
+      min-height: 460px;
+      display: flex;
+      align-items: flex-end;
+      padding: 36px;
+      background-size: cover;
+      background-position: center;
+    }
+    .bento-hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(11, 12, 16, 0.95) 90%);
+    }
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 600px;
+    }
+    .hero-badge {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .hero-title {
+      font-size: 38px;
+      font-weight: 900;
+      line-height: 1.1;
+      margin-bottom: 12px;
+    }
+    .hero-overview {
+      font-size: 14px;
+      color: #cbd5e1;
+      line-height: 1.5;
+      margin-bottom: 20px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .hero-btn {
+      background: #fff;
+      color: #000;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-weight: 800;
+      font-size: 14px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: transform 0.2s;
+    }
+    .hero-btn:hover { transform: scale(1.04); }
+
+    /* Card 2: Dragon Ball Hub (Span 4 cols) */
+    .bento-db {
+      grid-column: span 4;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(18, 20, 29, 0.8) 100%);
+      border-color: rgba(245, 158, 11, 0.3);
+      cursor: pointer;
+    }
+    .db-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .db-count {
+      background: var(--accent-db);
+      color: #000;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 8px;
+      border-radius: 20px;
+    }
+    .db-title {
+      font-size: 22px;
+      font-weight: 900;
+      margin: 12px 0 6px;
+    }
+    .db-desc {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    /* Card 3: Reprendre la lecture / Quick Watch (Span 4 cols) */
+    .bento-resume {
+      grid-column: span 4;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 65%;
+      background: var(--accent-vf);
+    }
+
+    /* Card 4: Nouveautés VF (Span 6 cols) */
+    .bento-vf {
+      grid-column: span 6;
+      padding: 24px;
+    }
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .section-head h3 { font-size: 18px; font-weight: 800; }
+    .vf-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 12px;
+    }
+    .vf-mini-card {
+      background: rgba(255,255,255,0.04);
+      border-radius: 10px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .vf-mini-card:hover { transform: scale(1.04); }
+    .vf-mini-card img {
+      width: 100%;
+      aspect-ratio: 2/3;
+      object-fit: cover;
+    }
+    .vf-mini-title {
+      padding: 6px 8px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Card 5: Top Communauté (Span 6 cols) */
+    .bento-top {
+      grid-column: span 6;
+      padding: 24px;
+    }
+    .top-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .top-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.03);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .top-item:hover { background: rgba(255,255,255,0.08); }
+    .top-rank {
+      font-size: 18px;
+      font-weight: 900;
+      color: var(--accent);
+      min-width: 24px;
+    }
+    .top-item-title {
+      font-size: 14px;
+      font-weight: 700;
+      flex: 1;
+    }
+
+    /* Modal Player */
+    .bento-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(10px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      padding: 20px;
+    }
+    .bento-modal.open { display: flex; }
+    .bento-modal-content {
+      background: #141622;
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      width: 900px;
+      max-width: 100%;
+      overflow: hidden;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.9);
+      position: relative;
+    }
+    .bento-modal-close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: rgba(0,0,0,0.6);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #fff;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      z-index: 10;
+    }
+    .bento-modal-player {
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: #000;
+    }
+    .bento-modal-player iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    .bento-modal-body {
+      padding: 24px;
+    }
+
+    @media (max-width: 900px) {
+      .bento-hero, .bento-db, .bento-resume, .bento-vf, .bento-top {
+        grid-column: span 12 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Switcher Bar -->
+  <div class="style-switcher">
+    <span>Designs Disponibles :</span>
+    <a href="/">Version Actuelle</a>
+    <a href="/sidebar">1. Sidebar Rétractable</a>
+    <a href="/hubs">2. Univers & Hubs</a>
+    <a href="/bento" class="active">3. Bento Grid 2026</a>
+    <a href="/explorer">4. Explorateur Filtres</a>
+    <a href="/video">5. Video-First & PiP</a>
+  </div>
+
+  <header class="header">
+    <a href="/bento" class="logo-brand">
+      <img src="/logo.png" alt="GenZstream" />
+      <div>
+        <div class="brand-title">GenZstream</div>
+        <div class="brand-bento-tag">Bento Hub Dashboard</div>
+      </div>
+    </a>
+    <div style="font-size: 13px; color: var(--muted);">
+      Assistance : <a href="https://t.me/ec4rlate" target="_blank" style="color: var(--accent); text-decoration: none;">t.me/ec4rlate</a>
+    </div>
+  </header>
+
+  <main class="bento-wrapper">
+    <div class="bento-grid">
+      <!-- 1. Hero Spotlight -->
+      <div id="bentoHero" class="bento-card bento-hero" style="background-image: url('https://s4.anilist.co/file/anilistcdn/media/anime/banner/16498-8jpFCOcDmneX.jpg');">
+        <div class="hero-content">
+          <span class="hero-badge">Tendance Mondiale</span>
+          <h1 class="hero-title" id="bentoHeroTitle">Attack on Titan</h1>
+          <p class="hero-overview" id="bentoHeroDesc">
+            Les Titans menacent l'humanité retranchée derrière trois hauts murs. Eren et ses camarades du bataillon d'exploration mènent la résistance.
+          </p>
+          <button class="hero-btn" id="bentoPlayHeroBtn">
+            ▶ Lancer la Lecture Immédiate
+          </button>
+        </div>
+      </div>
+
+      <!-- 2. Dragon Ball Bento -->
+      <div class="bento-card bento-db" id="bentoDbCard">
+        <div>
+          <div class="db-header">
+            <span style="font-size: 28px;">🐉</span>
+            <span class="db-count">39 Titres</span>
+          </div>
+          <div class="db-title">Saga Dragon Ball</div>
+          <p class="db-desc">Accédez en un clic à l'intégrale DB, DBZ, DB Super et l'ensemble des 20 films d'animation.</p>
+        </div>
+        <div style="font-size: 13px; font-weight: 700; color: var(--accent-db); margin-top: 16px;">
+          Voir la saga complète →
+        </div>
+      </div>
+
+      <!-- 3. Resume / Quick Continue -->
+      <div class="bento-card bento-resume" id="bentoResumeCard">
+        <div>
+          <div style="font-size: 11px; text-transform: uppercase; font-weight: 800; color: var(--accent-vf); margin-bottom: 8px;">
+            Dernière Lecture
+          </div>
+          <div style="font-size: 18px; font-weight: 800;" id="resumeTitle">Dragon Ball Z</div>
+          <div style="font-size: 13px; color: var(--muted); margin-top: 4px;">Saison 1 · Épisode 1</div>
+          <div class="progress-bar">
+            <div class="progress-fill"></div>
+          </div>
+        </div>
+        <button class="hero-btn" style="margin-top: 14px; padding: 8px 16px; font-size: 13px;" id="resumeBtn">
+          ▶ Reprendre (14:32)
+        </button>
+      </div>
+
+      <!-- 4. Nouveautés VF -->
+      <div class="bento-card bento-vf">
+        <div class="section-head">
+          <h3>🇫🇷 Nouveautés 100% VF</h3>
+          <span style="font-size: 12px; color: var(--muted);">Flux Français Directs</span>
+        </div>
+        <div class="vf-list" id="vfList">
+          <!-- Injected JS -->
+        </div>
+      </div>
+
+      <!-- 5. Top 5 Tendances -->
+      <div class="bento-card bento-top">
+        <div class="section-head">
+          <h3>🔥 Top Communauté</h3>
+          <span style="font-size: 12px; color: var(--muted);">Les plus vus</span>
+        </div>
+        <div class="top-list" id="topList">
+          <!-- Injected JS -->
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Player Modal -->
+  <div id="bentoModal" class="bento-modal">
+    <div class="bento-modal-content">
+      <button class="bento-modal-close" onclick="closeBentoModal()">✕</button>
+      <div class="bento-modal-player">
+        <iframe id="bentoIframe" src="" allowfullscreen allow="autoplay; encrypted-media; fullscreen"></iframe>
+      </div>
+      <div class="bento-modal-body">
+        <h2 id="bentoModalTitle" style="font-size: 22px; font-weight: 800; margin-bottom: 8px;"></h2>
+        <div style="font-size: 13px; font-weight: 700; margin-top: 14px;">Lecteurs disponibles :</div>
+        <div id="bentoSources" style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let rawBrowse = null;
+    let heroMedia = null;
+
+    async function init() {
+      try {
+        const res = await fetch('/api/v1/browse');
+        rawBrowse = await res.json();
+
+        if (rawBrowse.hero) {
+          heroMedia = rawBrowse.hero;
+          document.getElementById('bentoHeroTitle').textContent = heroMedia.title;
+          document.getElementById('bentoHeroDesc').textContent = heroMedia.overview || '';
+          if (heroMedia.backdropPath) {
+            document.getElementById('bentoHero').style.backgroundImage = `url('${heroMedia.backdropPath}')`;
+          }
+          document.getElementById('bentoPlayHeroBtn').onclick = () => launchMedia(heroMedia);
+        }
+
+        renderVf();
+        renderTop();
+
+        // DB card click
+        document.getElementById('bentoDbCard').onclick = () => {
+          const dbRow = rawBrowse.rows?.find(r => r.key === 'dragon_ball');
+          if (dbRow && dbRow.items && dbRow.items[0]) {
+            launchMedia(dbRow.items[0]);
+          }
+        };
+
+        // Resume click
+        document.getElementById('resumeBtn').onclick = () => {
+          launchMedia({
+            tmdbId: 813,
+            mediaType: 'tv',
+            title: 'Dragon Ball Z'
+          });
+        };
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function renderVf() {
+      const vfContainer = document.getElementById('vfList');
+      vfContainer.innerHTML = '';
+      const items = [];
+      (rawBrowse.rows || []).forEach(r => {
+        (r.items || []).forEach(it => {
+          if (it.hasVf !== false && !items.find(x => x.tmdbId === it.tmdbId)) items.push(it);
+        });
+      });
+
+      items.slice(0, 4).forEach(it => {
+        const el = document.createElement('div');
+        el.className = 'vf-mini-card';
+        el.onclick = () => launchMedia(it);
+        el.innerHTML = `
+          <img src="${it.posterPath || '/favicon.png'}" alt="${it.title}" loading="lazy" />
+          <div class="vf-mini-title">${it.title}</div>
+        `;
+        vfContainer.appendChild(el);
+      });
+    }
+
+    function renderTop() {
+      const topContainer = document.getElementById('topList');
+      topContainer.innerHTML = '';
+      const items = [];
+      (rawBrowse.rows || []).forEach(r => {
+        (r.items || []).forEach(it => {
+          if (!items.find(x => x.tmdbId === it.tmdbId)) items.push(it);
+        });
+      });
+
+      items.slice(0, 4).forEach((it, idx) => {
+        const el = document.createElement('div');
+        el.className = 'top-item';
+        el.onclick = () => launchMedia(it);
+        el.innerHTML = `
+          <div class="top-rank">#${idx + 1}</div>
+          <div class="top-item-title">${it.title}</div>
+          <span style="font-size: 11px; color: #10b981; font-weight: 700;">${it.hasVf !== false ? 'VF' : 'VOSTFR'}</span>
+        `;
+        topContainer.appendChild(el);
+      });
+    }
+
+    async function launchMedia(media) {
+      const modal = document.getElementById('bentoModal');
+      const title = document.getElementById('bentoModalTitle');
+      const iframe = document.getElementById('bentoIframe');
+      const sources = document.getElementById('bentoSources');
+
+      title.textContent = media.title;
+      iframe.src = '';
+      sources.innerHTML = '<div style="color: #9ca3af;">Chargement...</div>';
+      modal.classList.add('open');
+
+      try {
+        const res = await fetch(`/api/v1/media/${media.mediaType || 'tv'}/${media.tmdbId}/links?season=1&episodeId=1`);
+        const data = await res.json();
+        const links = data.links || [];
+
+        sources.innerHTML = '';
+        links.forEach((l, idx) => {
+          const btn = document.createElement('button');
+          btn.style.cssText = 'background: #1e2235; color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600;';
+          btn.textContent = `▶ ${l.name}`;
+          btn.onclick = async () => {
+            const playRes = await fetch(`/api/v1/play/${l.id}`);
+            const playData = await playRes.json();
+            if (playData.url) iframe.src = playData.url;
+          };
+          sources.appendChild(btn);
+
+          if (idx === 0) btn.click();
+        });
+      } catch (e) {
+        sources.innerHTML = 'Erreur';
+      }
+    }
+
+    function closeBentoModal() {
+      document.getElementById('bentoModal').classList.remove('open');
+      document.getElementById('bentoIframe').src = '';
+    }
+
+    init();
+  </script>
+</body>
+</html>

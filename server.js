@@ -1653,8 +1653,16 @@ const server = http.createServer(async (req, res) => {
     return res.end();
   }
 
-  // Resolve static file path
-  let filePath = path.join(__dirname, pathname === '/' ? 'index.html' : pathname);
+  // Route aliases for alternative index layouts
+  const layoutAliases = {
+    '/sidebar': 'index-sidebar.html',
+    '/hubs': 'index-hubs.html',
+    '/bento': 'index-bento.html',
+    '/explorer': 'index-explorer.html',
+    '/video': 'index-video.html'
+  };
+  const resolvedTarget = layoutAliases[pathname] || (pathname === '/' ? 'index.html' : pathname);
+  let filePath = path.join(__dirname, resolvedTarget);
 
   // Safety check against directory traversal
   if (!filePath.startsWith(__dirname)) {

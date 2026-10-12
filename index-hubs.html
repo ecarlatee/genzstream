@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="color-scheme" content="dark" />
+  <title>GenZstream · Architecture 2 : Hubs & Univers Thématiques</title>
+  <link rel="icon" href="/favicon.png" type="image/png" sizes="64x64" />
+  <link rel="stylesheet" href="/assets/f3jcgis3.css" />
+  <style>
+    :root {
+      --bg-dark: #08090d;
+      --bg-card: #12141c;
+      --bg-card-hover: #1b1e2c;
+      --accent-db: #f59e0b; /* Dragon Ball Orange/Gold */
+      --accent-vf: #10b981;
+      --accent-anime: #8b5cf6;
+      --accent-movie: #ec4899;
+      --accent-series: #3b82f6;
+      --text-main: #f9fafb;
+      --text-muted: #9ca3af;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Instrument Sans", sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Switcher Bar */
+    .style-switcher {
+      background: #040507;
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 6px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      overflow-x: auto;
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .style-switcher span { color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+    .style-switcher a {
+      color: var(--text-muted);
+      text-decoration: none;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.04);
+      transition: all 0.2s;
+    }
+    .style-switcher a:hover { background: rgba(255,255,255,0.12); color: #fff; }
+    .style-switcher a.active {
+      background: var(--accent-db);
+      color: #000;
+      font-weight: 700;
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+    }
+
+    /* Navbar */
+    .navbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 40px;
+      background: rgba(8, 9, 13, 0.95);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: #fff;
+    }
+    .brand img {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+    }
+    .brand-name {
+      font-size: 20px;
+      font-weight: 800;
+    }
+    .brand-sub {
+      font-size: 11px;
+      color: var(--accent-db);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 700;
+    }
+
+    /* Hero Spotlight */
+    .hero-spotlight {
+      margin: 24px 40px;
+      border-radius: 20px;
+      height: 420px;
+      position: relative;
+      background-size: cover;
+      background-position: center;
+      display: flex;
+      align-items: flex-end;
+      padding: 48px;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+      border: 1px solid var(--border-subtle);
+    }
+    .hero-spotlight::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(8,9,13,0.1) 0%, rgba(8,9,13,0.95) 90%);
+    }
+    .spotlight-content {
+      position: relative;
+      z-index: 2;
+      max-width: 700px;
+    }
+    .spotlight-title {
+      font-size: 42px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      margin-bottom: 14px;
+      line-height: 1.1;
+    }
+    .spotlight-desc {
+      font-size: 15px;
+      line-height: 1.6;
+      color: #d1d5db;
+      margin-bottom: 24px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .btn-gold {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #000;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-weight: 800;
+      font-size: 15px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 4px 20px rgba(245, 158, 11, 0.4);
+      transition: transform 0.2s;
+    }
+    .btn-gold:hover { transform: scale(1.04); }
+
+    /* The Franchise / Hub Tiles */
+    .hubs-section {
+      padding: 10px 40px 30px;
+    }
+    .hubs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 18px;
+    }
+    .hub-tile {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 24px 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 12px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .hub-tile::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 0.3s;
+      z-index: 0;
+    }
+    .hub-tile:hover {
+      transform: translateY(-8px) scale(1.02);
+      border-color: rgba(255,255,255,0.3);
+      box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+    }
+    .hub-tile.active {
+      border-color: var(--accent-db);
+      box-shadow: 0 0 25px rgba(245, 158, 11, 0.35);
+    }
+
+    /* Individual Hub Themes */
+    .hub-db:hover::before { background: radial-gradient(circle at center, rgba(245,158,11,0.2) 0%, transparent 70%); opacity: 1; }
+    .hub-vf:hover::before { background: radial-gradient(circle at center, rgba(16,185,129,0.2) 0%, transparent 70%); opacity: 1; }
+    .hub-anime:hover::before { background: radial-gradient(circle at center, rgba(139,92,246,0.2) 0%, transparent 70%); opacity: 1; }
+    .hub-cinema:hover::before { background: radial-gradient(circle at center, rgba(236,72,153,0.2) 0%, transparent 70%); opacity: 1; }
+    .hub-series:hover::before { background: radial-gradient(circle at center, rgba(59,130,246,0.2) 0%, transparent 70%); opacity: 1; }
+
+    .hub-icon {
+      font-size: 38px;
+      position: relative;
+      z-index: 1;
+    }
+    .hub-name {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: -0.2px;
+      position: relative;
+      z-index: 1;
+    }
+    .hub-badge {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.08);
+      color: var(--text-muted);
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Content Area */
+    .content-area {
+      padding: 20px 40px 60px;
+    }
+    .universe-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 14px;
+    }
+    .universe-title {
+      font-size: 26px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .timeline-tabs {
+      display: flex;
+      gap: 10px;
+    }
+    .timeline-btn {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .timeline-btn:hover, .timeline-btn.active {
+      background: #fff;
+      color: #000;
+      border-color: #fff;
+    }
+
+    /* Cards Grid */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
+      gap: 20px;
+    }
+    .media-card {
+      background: var(--bg-card);
+      border-radius: 14px;
+      overflow: hidden;
+      cursor: pointer;
+      border: 1px solid var(--border-subtle);
+      transition: all 0.25s ease;
+      position: relative;
+    }
+    .media-card:hover {
+      transform: translateY(-6px);
+      border-color: rgba(255, 255, 255, 0.3);
+      box-shadow: 0 14px 30px rgba(0,0,0,0.6);
+    }
+    .poster-wrap {
+      position: relative;
+      padding-top: 145%;
+      background: #111;
+    }
+    .poster-wrap img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .card-info {
+      padding: 12px;
+    }
+    .card-title {
+      font-size: 14px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 4px;
+    }
+    .card-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+    }
+    .badge-vf {
+      background: var(--accent-vf);
+      color: #000;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    /* Modal Player */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      padding: 20px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal-box {
+      background: #141722;
+      border-radius: 20px;
+      width: 900px;
+      max-width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      border: 1px solid var(--border-subtle);
+      box-shadow: 0 25px 60px rgba(0,0,0,0.9);
+      position: relative;
+    }
+    .modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: rgba(0,0,0,0.6);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #fff;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 18px;
+      z-index: 10;
+    }
+    .modal-player-wrap {
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: #000;
+    }
+    .modal-player-wrap iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    .modal-details {
+      padding: 24px;
+    }
+    .source-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .source-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .source-btn:hover, .source-btn.active {
+      background: var(--accent-db);
+      color: #000;
+      border-color: var(--accent-db);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Switcher Bar -->
+  <div class="style-switcher">
+    <span>Designs Disponibles :</span>
+    <a href="/">Version Actuelle</a>
+    <a href="/sidebar">1. Sidebar Rétractable</a>
+    <a href="/hubs" class="active">2. Univers & Hubs</a>
+    <a href="/bento">3. Bento Grid 2026</a>
+    <a href="/explorer">4. Explorateur Filtres</a>
+    <a href="/video">5. Video-First & PiP</a>
+  </div>
+
+  <!-- Navbar -->
+  <header class="navbar">
+    <a href="/hubs" class="brand">
+      <img src="/logo.png" alt="GenZstream" />
+      <div>
+        <div class="brand-name">GenZstream</div>
+        <div class="brand-sub">Franchise & Hubs Universe</div>
+      </div>
+    </a>
+    <div style="font-size: 13px; color: var(--text-muted);">
+      Contact Telegram : <a href="https://t.me/ec4rlate" target="_blank" style="color: var(--accent-db); text-decoration: none; font-weight: 700;">t.me/ec4rlate</a>
+    </div>
+  </header>
+
+  <!-- Spotlight Banner -->
+  <div id="spotlightBanner" class="hero-spotlight" style="background-image: url('https://s4.anilist.co/file/anilistcdn/media/anime/banner/813.jpg');">
+    <div class="spotlight-content">
+      <div style="color: var(--accent-db); font-weight: 800; font-size: 12px; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px;">
+        ⚡ Univers à l'honneur
+      </div>
+      <h1 class="spotlight-title" id="spotlightTitle">Saga Complète Dragon Ball</h1>
+      <p class="spotlight-desc" id="spotlightDesc">
+        Retrouvez les 39 séries, films cultes et OAVs de l'univers mythique d'Akira Toriyama en VF intégrale et VOSTFR non censurée.
+      </p>
+      <button class="btn-gold" onclick="selectHub('dragon_ball')">
+        🐉 Explorer l'Univers Dragon Ball
+      </button>
+    </div>
+  </div>
+
+  <!-- Hubs / Franchises Tiles (Disney+ style) -->
+  <section class="hubs-section">
+    <div class="hubs-grid">
+      <div class="hub-tile hub-db active" onclick="selectHub('dragon_ball', this)">
+        <div class="hub-icon">🐉</div>
+        <div class="hub-name">Dragon Ball Universe</div>
+        <div class="hub-badge">39 Œuvres & Films</div>
+      </div>
+
+      <div class="hub-tile hub-vf" onclick="selectHub('vf', this)">
+        <div class="hub-icon">🇫🇷</div>
+        <div class="hub-name">100% Français (VF)</div>
+        <div class="hub-badge">Films & Séries VF</div>
+      </div>
+
+      <div class="hub-tile hub-anime" onclick="selectHub('animes', this)">
+        <div class="hub-icon">⚡</div>
+        <div class="hub-name">Animés & Shōnen</div>
+        <div class="hub-badge">Plus de 1000 Titres</div>
+      </div>
+
+      <div class="hub-tile hub-cinema" onclick="selectHub('movies', this)">
+        <div class="hub-icon">🎬</div>
+        <div class="hub-name">Cinéma & Box-Office</div>
+        <div class="hub-badge">Blockbusters HD</div>
+      </div>
+
+      <div class="hub-tile hub-series" onclick="selectHub('series', this)">
+        <div class="hub-icon">📺</div>
+        <div class="hub-name">Séries TV</div>
+        <div class="hub-badge">Saisons Complètes</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Universe Dynamic Content -->
+  <main class="content-area">
+    <div class="universe-header">
+      <div class="universe-title" id="activeUniverseTitle">
+        <span>🐉</span> Univers Dragon Ball
+      </div>
+      <div class="timeline-tabs" id="universeTabs">
+        <button class="timeline-btn active" onclick="setTimelineFilter('all', this)">Tous les titres (39)</button>
+        <button class="timeline-btn" onclick="setTimelineFilter('canon', this)">Ordre Chronologique Canon</button>
+        <button class="timeline-btn" onclick="setTimelineFilter('movies', this)">Films & OAVs</button>
+      </div>
+    </div>
+
+    <div class="cards-grid" id="cardsGrid">
+      <!-- Injected by JavaScript -->
+    </div>
+  </main>
+
+  <!-- Modal Player -->
+  <div id="modalBackdrop" class="modal-backdrop">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <div class="modal-player-wrap">
+        <iframe id="modalIframe" src="" allowfullscreen allow="autoplay; encrypted-media; fullscreen"></iframe>
+      </div>
+      <div class="modal-details">
+        <h2 id="modalTitle" style="font-size: 22px; font-weight: 800; margin-bottom: 8px;"></h2>
+        <p id="modalOverview" style="font-size: 14px; color: #cbd5e1; line-height: 1.6;"></p>
+        <div style="font-weight: 700; margin-top: 18px; font-size: 14px;">Sélectionnez une source de lecture :</div>
+        <div class="source-buttons" id="modalSources"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let rawBrowse = null;
+    let activeHub = 'dragon_ball';
+    let timelineMode = 'all';
+
+    async function init() {
+      try {
+        const res = await fetch('/api/v1/browse');
+        rawBrowse = await res.json();
+        renderHubContent();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function selectHub(hubKey, el) {
+      activeHub = hubKey;
+      document.querySelectorAll('.hub-tile').forEach(t => t.classList.remove('active'));
+      if (el) el.classList.add('active');
+      renderHubContent();
+    }
+
+    function setTimelineFilter(mode, btn) {
+      timelineMode = mode;
+      document.querySelectorAll('.timeline-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderHubContent();
+    }
+
+    function renderHubContent() {
+      if (!rawBrowse || !rawBrowse.rows) return;
+      const titleEl = document.getElementById('activeUniverseTitle');
+      const grid = document.getElementById('cardsGrid');
+      grid.innerHTML = '';
+
+      let items = [];
+
+      if (activeHub === 'dragon_ball') {
+        titleEl.innerHTML = `<span>🐉</span> Univers Dragon Ball Intégral`;
+        const dbRow = rawBrowse.rows.find(r => r.key === 'dragon_ball');
+        items = dbRow ? (dbRow.items || []) : [];
+
+        if (timelineMode === 'canon') {
+          // Sort by release year
+          items = [...items].sort((a,b) => (a.releaseYear || 1990) - (b.releaseYear || 1990));
+        } else if (timelineMode === 'movies') {
+          items = items.filter(it => it.mediaType === 'movie');
+        }
+      } else if (activeHub === 'vf') {
+        titleEl.innerHTML = `<span>🇫🇷</span> Pôle 100% Français (VF)`;
+        rawBrowse.rows.forEach(r => {
+          (r.items || []).forEach(it => {
+            if (it.hasVf !== false && !items.find(x => x.tmdbId === it.tmdbId)) {
+              items.push(it);
+            }
+          });
+        });
+      } else {
+        titleEl.innerHTML = `<span>✨</span> Pôle ${activeHub.toUpperCase()}`;
+        rawBrowse.rows.forEach(r => {
+          (r.items || []).forEach(it => {
+            if (!items.find(x => x.tmdbId === it.tmdbId)) items.push(it);
+          });
+        });
+      }
+
+      items.forEach(it => {
+        const card = document.createElement('div');
+        card.className = 'media-card';
+        card.onclick = () => openModal(it);
+
+        card.innerHTML = `
+          <div class="poster-wrap">
+            <img src="${it.posterPath || '/favicon.png'}" alt="${it.title}" loading="lazy" />
+          </div>
+          <div class="card-info">
+            <div class="card-title">${it.title}</div>
+            <div class="card-meta">
+              <span>${it.releaseYear || 'Année inconnue'}</span>
+              ${it.hasVf !== false ? '<span class="badge-vf">VF</span>' : '<span style="font-size:10px;color:#f59e0b;">VOSTFR</span>'}
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    async function openModal(media) {
+      const backdrop = document.getElementById('modalBackdrop');
+      const title = document.getElementById('modalTitle');
+      const overview = document.getElementById('modalOverview');
+      const iframe = document.getElementById('modalIframe');
+      const sourcesWrap = document.getElementById('modalSources');
+
+      title.textContent = media.title;
+      overview.textContent = media.overview || 'Synopsis non renseigné.';
+      sourcesWrap.innerHTML = '<div style="color: #9ca3af; font-size: 13px;">Recherche des flux disponibles...</div>';
+      iframe.src = '';
+      backdrop.classList.add('open');
+
+      try {
+        const res = await fetch(`/api/v1/media/${media.mediaType || 'tv'}/${media.tmdbId}/links?season=1&episodeId=1`);
+        const data = await res.json();
+        const links = data.links || [];
+
+        sourcesWrap.innerHTML = '';
+        if (links.length === 0) {
+          sourcesWrap.innerHTML = '<div style="color: #ef4444;">Aucun lecteur disponible actuellement.</div>';
+          return;
+        }
+
+        links.forEach((l, idx) => {
+          const btn = document.createElement('button');
+          btn.className = `source-btn ${idx === 0 ? 'active' : ''}`;
+          btn.textContent = `▶ ${l.name}`;
+          btn.onclick = async () => {
+            document.querySelectorAll('.source-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const playRes = await fetch(`/api/v1/play/${l.id}`);
+            const playData = await playRes.json();
+            if (playData.url) iframe.src = playData.url;
+          };
+          sourcesWrap.appendChild(btn);
+
+          if (idx === 0) btn.click();
+        });
+      } catch (e) {
+        sourcesWrap.innerHTML = '<div style="color: #ef4444;">Erreur de connexion.</div>';
+      }
+    }
+
+    function closeModal() {
+      document.getElementById('modalBackdrop').classList.remove('open');
+      document.getElementById('modalIframe').src = '';
+    }
+
+    init();
+  </script>
+</body>
+</html>
