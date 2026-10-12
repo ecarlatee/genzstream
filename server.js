@@ -1052,8 +1052,23 @@ const server = http.createServer(async (req, res) => {
   // Serve Browse (Home page catalogue)
   if (pathname === '/api/v1/browse') {
     if (catalogueData && catalogueData.browse) {
-      return sendJson(res, catalogueData.browse);
+      const browse = {
+        hero: catalogueData.browse.hero || null,
+        perso: catalogueData.browse.perso || { reprendre: [], favoris: [], historique: [] },
+        rows: (catalogueData.browse.rows || []).map((r, idx) => ({
+          ...r,
+          key: r.key || r.slug || `row_${idx}`,
+          titre: r.titre || r.label || 'Rangée',
+          items: r.items || []
+        }))
+      };
+      return sendJson(res, browse);
     }
+  }
+
+  // Plateformes
+  if (pathname === '/api/v1/plateformes') {
+    return sendJson(res, { items: [] });
   }
 
   // Serve Catalogue & Discover (Movies, Series, Anime pages)
@@ -1061,6 +1076,7 @@ const server = http.createServer(async (req, res) => {
     if (catalogueData) {
       const kind = parsedUrl.searchParams.get('kind');
       const page = parseInt(parsedUrl.searchParams.get('page') || '0', 10);
+      const perPage = 24;
       let items = catalogueData.all_items || [];
       if (kind === 'films') items = catalogueData.movies || [];
       else if (kind === 'series') items = catalogueData.series || [];
@@ -1072,11 +1088,25 @@ const server = http.createServer(async (req, res) => {
         items = items.filter(it => it.genres && it.genres.some(g => g.toLowerCase() === gLower));
       }
 
+      const sort = parsedUrl.searchParams.get('sort') || parsedUrl.searchParams.get('tri');
+      if (sort === 'note' || sort === 'top') {
+        items = [...items].sort((a, b) => (b.voteAverage || 0) - (a.voteAverage || 0));
+      } else if (sort === 'annee' || sort === 'recent') {
+        items = [...items].sort((a, b) => (b.releaseYear || 0) - (a.releaseYear || 0));
+      } else if (sort === 'titre' || sort === 'az') {
+        items = [...items].sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+      }
+
+      const total = items.length;
+      const start = page * perPage;
+      const pagedItems = items.slice(start, start + perPage);
+
       return sendJson(res, {
-        items,
-        total: items.length,
+        items: pagedItems,
+        total,
         page,
-        finForcee: false
+        perPage,
+        finForcee: start + perPage >= total
       });
     }
   }
@@ -1367,8 +1397,18 @@ const server = http.createServer(async (req, res) => {
     return sendJson(res, { items: [] });
   }
 
-  if (pathname === '/api/v1/patch') {
+  if (pathname === '/api/v1/patch-notes' || pathname === '/api/v1/patch') {
     return sendJson(res, { notes: [] });
+  }
+
+  if (pathname === '/api/v1/stats') {
+    return sendJson(res, {
+      contents: {
+        movies: (catalogueData?.movies || []).length,
+        series: (catalogueData?.series || []).length,
+        animes: (catalogueData?.animes || []).length
+      }
+    });
   }
 
   // Content Requests endpoints
@@ -1460,7 +1500,7 @@ const server = http.createServer(async (req, res) => {
 
   // Sagas & Univers
   if (pathname === '/api/v1/sagas' || pathname === '/api/v1/univers') {
-    return sendJson(res, { sagas: [], univers: [], results: [] });
+    return sendJson(res, { sagas: [], univers: null, items: [], results: [] });
   }
 
   // Persons / Cast
@@ -1477,7 +1517,7 @@ const server = http.createServer(async (req, res) => {
     });
   }
   if (pathname === '/api/v1/search/personnes') {
-    return sendJson(res, { results: [] });
+    return sendJson(res, { personnes: [], results: [] });
   }
 
   // Generiques (skip intro / outro)
@@ -1542,7 +1582,20 @@ const server = http.createServer(async (req, res) => {
 
   // Catch-all for any unhandled /api/ route: NEVER proxy to heiwastream.fr, return safe JSON!
   if (pathname.startsWith('/api/')) {
-    return sendJson(res, { ok: true });
+    return sendJson(res, {
+      ok: true,
+      items: [],
+      results: [],
+      sagas: [],
+      personnes: [],
+      reviews: [],
+      badges: [],
+      notes: [],
+      total: 0,
+      page: 0,
+      perPage: 24,
+      finForcee: true
+    });
   }
 
   // Handle /sw.js - do not allow registering HTML as ServiceWorker
