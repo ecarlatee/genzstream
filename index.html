@@ -6,6 +6,28 @@
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <meta name="color-scheme" content="dark" />
     <script>
+      try {
+        sessionStorage.clear();
+        localStorage.clear();
+      } catch (e) {}
+      window.addEventListener('error', function(e) {
+        try {
+          fetch('/api/v1/client-error', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: 'uncaught', message: e.message, filename: e.filename, lineno: e.lineno, colno: e.colno, stack: e.error ? e.error.stack : null, url: location.href })
+          }).catch(function(){});
+        } catch(err){}
+      });
+      window.addEventListener('unhandledrejection', function(e) {
+        try {
+          fetch('/api/v1/client-error', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: 'unhandledrejection', reason: String(e.reason && e.reason.stack || e.reason), url: location.href })
+          }).catch(function(){});
+        } catch(err){}
+      });
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(function(regs) {
           for (var r of regs) r.unregister();
@@ -132,10 +154,10 @@
         ]
       }
     </script>
-    <script type="module" crossorigin src="/assets/bo4866ec.js?v=6"></script>
-    <link rel="modulepreload" crossorigin href="/assets/il30qalw.js?v=6">
-    <link rel="modulepreload" crossorigin href="/assets/iyuzmj8o.js?v=6">
-    <link rel="modulepreload" crossorigin href="/assets/krrbl36g.js?v=6">
+    <script type="module" crossorigin src="/assets/bo4866ec.js?v=8"></script>
+    <link rel="modulepreload" crossorigin href="/assets/il30qalw.js?v=8">
+    <link rel="modulepreload" crossorigin href="/assets/iyuzmj8o.js?v=8">
+    <link rel="modulepreload" crossorigin href="/assets/krrbl36g.js?v=8">
     <link rel="stylesheet" crossorigin href="/assets/f3jcgis3.css">
       <link rel="preload" href="/assets/instrument-sans-latin-wght-normal-fpxmccl5.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/assets/archivo-latin-wght-normal-kkdydwld.woff2" as="font" type="font/woff2" crossorigin />

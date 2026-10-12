@@ -75,8 +75,8 @@ function formatMediaDetail(it) {
   const releaseDate = it.releaseDate || `${releaseYear}-01-01`;
   const epCount = it.episodes || (isMovie ? 0 : 12);
 
-  let seasons = [];
-  if (!isMovie) {
+  let seasons = Array.isArray(it.seasons) && it.seasons.length > 0 ? it.seasons : [];
+  if (!isMovie && seasons.length === 0) {
     if (it.kind === 'animes') {
       seasons = [
         { seasonNumber: 1, name: 'Saison 1', episodeCount: Math.max(1, epCount) }
@@ -98,7 +98,7 @@ function formatMediaDetail(it) {
   return {
     tmdbId: it.tmdbId,
     mediaType: it.mediaType,
-    contentType: isMovie ? 'movie' : 'series',
+    contentType: isMovie ? 'movie' : (it.kind === 'animes' ? 'anime' : 'series'),
     title: it.title,
     posterPath: it.posterPath || null,
     backdropPath: it.backdropPath || it.posterPath || null,
@@ -1377,6 +1377,45 @@ const server = http.createServer(async (req, res) => {
     });
   }
 
+  // Client error reporting from browsers
+  if (pathname === '/api/v1/client-error') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      console.error('🚨 [CLIENT ERROR REPORTED]:', body);
+      res.writeHead(204, { 'Access-Control-Allow-Origin': '*' });
+      res.end();
+    });
+    return;
+  }
+
+  // Session entree & synchronization
+  if (pathname === '/api/v1/me/entree') {
+    return sendJson(res, {
+      session: null,
+      rows: { watchlist: [], history: [], favorites: [] },
+      maintenance: { actif: false, peutEntrer: true }
+    });
+  }
+
+  // Streaming session auth check (401 for guests)
+  if (pathname === '/api/v1/me/streaming') {
+    res.writeHead(401, {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Access-Control-Allow-Origin': '*'
+    });
+    return res.end(JSON.stringify({ error: 'Non connecté', code: 'non_connecte' }));
+  }
+
+  // Rows endpoint
+  if (pathname === '/api/v1/me/rows') {
+    return sendJson(res, {
+      watchlist: [],
+      history: [],
+      favorites: []
+    });
+  }
+
   // User state & sync endpoints
   if (pathname.startsWith('/api/v1/me/progress/')) {
     return sendJson(res, { reprise: null });
@@ -1399,8 +1438,7 @@ const server = http.createServer(async (req, res) => {
   if (
     pathname === '/api/v1/me/favorites' ||
     pathname === '/api/v1/me/watchlist' ||
-    pathname === '/api/v1/me/history' ||
-    pathname === '/api/v1/me/rows'
+    pathname === '/api/v1/me/history'
   ) {
     return sendJson(res, { items: [] });
   }
