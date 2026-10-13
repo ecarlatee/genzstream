@@ -1,1 +1,1 @@
-https://six-domain-economies-personally.trycloudflare.com
+https://crafts-bookmark-specifications-alice.trycloudflare.com/
