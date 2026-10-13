@@ -1100,7 +1100,17 @@ const server = http.createServer(async (req, res) => {
         items: dbItems
       });
 
-      // 3. Other curated rows
+      // 3. Rubrique Animés populaires
+      const animeItems = (catalogueData.animes || []).slice(0, 24);
+      if (animeItems.length > 0) {
+        rows.push({
+          key: 'animes_populaires',
+          titre: 'Animés populaires',
+          items: animeItems
+        });
+      }
+
+      // 4. Other curated rows
       for (const r of existingRows) {
         if (r.key === 'dragon_ball') continue;
         rows.push({
