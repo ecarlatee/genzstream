@@ -114,7 +114,7 @@ function formatMediaDetail(it) {
     audiodescription: false,
     hauteQualite: true,
     hasLinks: true,
-    languages: (it.hasVf === false) ? ['VOSTFR'] : ['VF', 'VOSTFR'],
+    languages: (it.hasVf === true) ? ['VOSTFR', 'VF'] : ['VOSTFR'],
     seasons,
     reviewCount: 18,
     reviewAverage: it.voteAverage || 8.2,
@@ -616,17 +616,8 @@ function generateLinks(it, season = 1, episodeNumber = 1) {
     const links = [
       {
         id: `genzhd_${tmdbId}_${season}_${episodeNumber}_vostfr`,
-        name: 'Lecteur 1 · GenZ HD (VOSTFR)',
+        name: 'Lecteur 1 · GenZ Stream HD (VOSTFR)',
         provider: 'genzhd',
-        language: 'VOSTFR',
-        quality: '1080p',
-        zplayer: true,
-        hasLinks: true
-      },
-      {
-        id: `vidsrc_${tmdbId}_${season}_${episodeNumber}_vostfr`,
-        name: 'Lecteur 2 · VidSrc HD (VOSTFR)',
-        provider: 'vidsrc',
         language: 'VOSTFR',
         quality: '1080p',
         zplayer: true,
@@ -634,45 +625,24 @@ function generateLinks(it, season = 1, episodeNumber = 1) {
       }
     ];
 
-    if (it.hasVf !== false) {
-      links.push(
-        {
-          id: `genzvf_${tmdbId}_${season}_${episodeNumber}_vf`,
-          name: 'Lecteur 1 · GenZ HD (VF)',
-          provider: 'genzvf',
-          language: 'VF',
-          quality: '1080p',
-          zplayer: true,
-          hasLinks: true
-        },
-        {
-          id: `vidsrc_${tmdbId}_${season}_${episodeNumber}_vf`,
-          name: 'Lecteur 2 · VidSrc HD (VF)',
-          provider: 'vidsrc',
-          language: 'VF',
-          quality: '1080p',
-          zplayer: true,
-          hasLinks: true
-        }
-      );
+    if (it.hasVf === true) {
+      links.push({
+        id: `genzvf_${tmdbId}_${season}_${episodeNumber}_vf`,
+        name: 'Lecteur 2 · GenZ Stream HD (VF)',
+        provider: 'genzvf',
+        language: 'VF',
+        quality: '1080p',
+        zplayer: true,
+        hasLinks: true
+      });
     }
-
-    links.push({
-      id: `genzhd_${tmdbId}_${season}_${episodeNumber}_va`,
-      name: 'Lecteur 3 · GenZ HD (Version Anglaise / Dub)',
-      provider: 'genzhd',
-      language: 'VO',
-      quality: '1080p',
-      zplayer: true,
-      hasLinks: true
-    });
 
     return links;
   }
 
   if (isMovie) {
     const movieLinks = [];
-    if (it.hasVf !== false) {
+    if (it.hasVf === true) {
       movieLinks.push({
         id: `vidsrc_${tmdbId}_1_1_vf`,
         name: 'Lecteur 1 · VidSrc HD (VF)',
@@ -716,7 +686,7 @@ function generateLinks(it, season = 1, episodeNumber = 1) {
   }
 
   const seriesLinks = [];
-  if (it.hasVf !== false) {
+  if (it.hasVf === true) {
     seriesLinks.push({
       id: `vidsrc_${tmdbId}_${season}_${episodeNumber}_vf`,
       name: 'Lecteur 1 · VidSrc HD (VF)',
@@ -832,7 +802,8 @@ const server = http.createServer(async (req, res) => {
 
   // Stream HLS proxy
   if (pathname === '/api/v1/stream/hls') {
-    const targetUrl = parsedUrl.searchParams.get('url');
+    let targetUrl = parsedUrl.searchParams.get('url');
+    if (targetUrl) targetUrl = targetUrl.trim().replace(/^["']|["']$/g, '');
     if (!targetUrl || (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://'))) {
       return sendJson(res, { error: 'Invalid stream URL' }, 400);
     }
@@ -869,15 +840,23 @@ const server = http.createServer(async (req, res) => {
         const rewritten = lines.map(line => {
           const trimmed = line.trim();
           if (!trimmed) return line;
-          if (trimmed.startsWith('#EXT-X-I-FRAME-STREAM-INF:')) {
+          if (trimmed.startsWith('#EXT-X-I-FRAME-STREAM-INF:') || trimmed.startsWith('#EXT-X-MEDIA:') || trimmed.startsWith('#EXT-X-KEY:') || trimmed.startsWith('#EXT-X-MAP:')) {
             return trimmed.replace(/URI="([^"]+)"/, (m, p1) => {
-              const abs = p1.startsWith('http') ? p1 : new URL(p1, targetUrl).toString();
-              return `URI="/api/v1/stream/hls?url=${encodeURIComponent(abs)}&referer=${encodeURIComponent(upstreamReferer)}"`;
+              try {
+                const abs = p1.startsWith('http') ? p1 : new URL(p1, targetUrl).toString();
+                return `URI="/api/v1/stream/hls?url=${encodeURIComponent(abs)}&referer=${encodeURIComponent(upstreamReferer)}"`;
+              } catch (e) {
+                return m;
+              }
             });
           }
           if (trimmed.startsWith('#')) return line;
-          const abs = trimmed.startsWith('http') ? trimmed : new URL(trimmed, targetUrl).toString();
-          return `/api/v1/stream/hls?url=${encodeURIComponent(abs)}&referer=${encodeURIComponent(upstreamReferer)}`;
+          try {
+            const abs = trimmed.startsWith('http') ? trimmed : new URL(trimmed, targetUrl).toString();
+            return `/api/v1/stream/hls?url=${encodeURIComponent(abs)}&referer=${encodeURIComponent(upstreamReferer)}`;
+          } catch (e) {
+            return line;
+          }
         }).join('\n');
 
         res.writeHead(200, {
@@ -1132,6 +1111,170 @@ const server = http.createServer(async (req, res) => {
         rows
       };
       return sendJson(res, browse);
+    }
+  }
+
+  // Dedicated Anime Browse endpoint
+  if (pathname === '/api/v1/anime-browse') {
+    if (catalogueData) {
+      const animes = catalogueData.animes || [];
+      const dbItems = animes.filter(it => it.title && it.title.toLowerCase().includes('dragon ball'));
+      
+      // Top 10 Animés (high rating, has both poster and backdrop)
+      const top10 = [...animes]
+        .filter(it => it.voteAverage >= 8.2 && it.posterPath && it.backdropPath)
+        .sort((a, b) => (b.voteAverage || 0) - (a.voteAverage || 0))
+        .slice(0, 10);
+
+      // Featured spotlights for hero
+      const heroCandidates = [
+        animes.find(it => it.title === 'Solo Leveling') || animes.find(it => it.title.toLowerCase().includes('solo leveling')),
+        animes.find(it => it.title === 'Attack on Titan'),
+        animes.find(it => it.title === 'Demon Slayer: Kimetsu no Yaiba'),
+        animes.find(it => it.title === 'JUJUTSU KAISEN'),
+        dbItems.find(it => it.title.toLowerCase() === 'dragon ball z') || dbItems[0],
+        animes.find(it => it.title === 'One-Punch Man'),
+        animes.find(it => it.title === 'Chainsaw Man') || animes.find(it => it.title === 'Death Note')
+      ].filter(Boolean);
+
+      // VF Available (strictly hasVf === true)
+      const vfAvailable = animes.filter(it => it.hasVf === true).slice(0, 24);
+
+      // Shonen & Action
+      const shonenAction = animes.filter(it =>
+        it.genres && it.genres.some(g => /action|adventure|combat/i.test(g)) && it.voteAverage >= 7.8
+      ).slice(0, 24);
+
+      // Isekai & Fantasy
+      const isekaiFantasy = animes.filter(it =>
+        it.genres && it.genres.some(g => /fantasy|fantastique/i.test(g))
+      ).slice(0, 24);
+
+      // Pures Pépites VOSTFR Exclusives (strictly hasVf !== true)
+      const vostfrExclusives = animes.filter(it => it.hasVf !== true && it.voteAverage >= 8.2).slice(0, 24);
+
+      // Mieux Notés (8.4+)
+      const topRated = [...animes]
+        .filter(it => it.voteAverage >= 8.4)
+        .sort((a, b) => (b.voteAverage || 0) - (a.voteAverage || 0))
+        .slice(0, 24);
+
+      return sendJson(res, {
+        stats: {
+          total: animes.length,
+          vf: animes.filter(it => it.hasVf === true).length,
+          vostfr: animes.length
+        },
+        hero: heroCandidates[0] || top10[0],
+        spotlights: heroCandidates,
+        sections: [
+          {
+            id: 'top-10',
+            title: 'Top 10 Animés du Moment',
+            subtitle: 'Les plus regardés et acclamés en France',
+            ranked: true,
+            items: top10
+          },
+          {
+            id: 'dragon-ball',
+            title: '🐉 Saga Dragon Ball Complète',
+            subtitle: 'Les 39 séries, films et OAV légendaires d\'Akira Toriyama',
+            ranked: false,
+            items: dbItems
+          },
+          {
+            id: 'vf-dispo',
+            title: '🇫🇷 Disponibles en Doublage Français (VF)',
+            subtitle: '219 animés avec doublage français intégral',
+            ranked: false,
+            items: vfAvailable
+          },
+          {
+            id: 'shonen-action',
+            title: '⚔️ Shōnen, Combats & Aventure',
+            subtitle: 'Les batailles les plus épiques de l\'animation japonaise',
+            ranked: false,
+            items: shonenAction
+          },
+          {
+            id: 'isekai-fantasy',
+            title: '🌀 Isekai & Mondes Fantastiques',
+            subtitle: 'Réincarnations, magies et univers parallèles',
+            ranked: false,
+            items: isekaiFantasy
+          },
+          {
+            id: 'vostfr-exclusifs',
+            title: '🇯🇵 VOSTFR Pures Pépites',
+            subtitle: 'L\'expérience originale japonaise avec sous-titres français officiels',
+            ranked: false,
+            items: vostfrExclusives
+          },
+          {
+            id: 'top-rated',
+            title: '⭐ Chefs-d\'œuvre Plébiscités',
+            subtitle: 'Les animés avec les meilleures notes de la communauté',
+            ranked: false,
+            items: topRated
+          }
+        ]
+      });
+    }
+  }
+
+  // Dedicated Anime Catalogue search & pagination endpoint
+  if (pathname === '/api/v1/anime-catalogue') {
+    if (catalogueData) {
+      const q = (parsedUrl.searchParams.get('q') || '').toLowerCase().trim();
+      const genre = (parsedUrl.searchParams.get('genre') || '').toLowerCase().trim();
+      const audio = (parsedUrl.searchParams.get('audio') || '').toLowerCase().trim(); // 'all', 'vf', 'vostfr'
+      const sort = parsedUrl.searchParams.get('sort') || 'note';
+      const page = parseInt(parsedUrl.searchParams.get('page') || '0', 10);
+      const limit = parseInt(parsedUrl.searchParams.get('limit') || '36', 10);
+
+      let pool = catalogueData.animes || [];
+
+      // Filter search
+      if (q) {
+        pool = pool.filter(it =>
+          (it.title && it.title.toLowerCase().includes(q)) ||
+          (it.overview && it.overview.toLowerCase().includes(q))
+        );
+      }
+
+      // Filter genre
+      if (genre && genre !== 'all' && genre !== 'tous') {
+        pool = pool.filter(it => it.genres && it.genres.some(g => g.toLowerCase() === genre));
+      }
+
+      // Filter audio
+      if (audio === 'vf') {
+        pool = pool.filter(it => it.hasVf === true);
+      } else if (audio === 'vostfr-only' || audio === 'vostfr_only') {
+        pool = pool.filter(it => it.hasVf !== true);
+      }
+
+      // Sort
+      if (sort === 'note' || sort === 'top') {
+        pool = [...pool].sort((a, b) => (b.voteAverage || 0) - (a.voteAverage || 0));
+      } else if (sort === 'recent' || sort === 'annee') {
+        pool = [...pool].sort((a, b) => (b.releaseYear || 0) - (a.releaseYear || 0));
+      } else if (sort === 'titre' || sort === 'az') {
+        pool = [...pool].sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+      }
+
+      const total = pool.length;
+      const start = page * limit;
+      const items = pool.slice(start, start + limit);
+
+      return sendJson(res, {
+        items,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        hasMore: start + limit < total
+      });
     }
   }
 
@@ -1716,6 +1859,12 @@ const server = http.createServer(async (req, res) => {
 
   // Route aliases for alternative index layouts
   const layoutAliases = {
+    '/animes': 'index-anime.html',
+    '/animes/': 'index-anime.html',
+    '/anime': 'index-anime.html',
+    '/anime/': 'index-anime.html',
+    '/anime-stream': 'index-anime.html',
+    '/anime-stream/': 'index-anime.html',
     '/v1': 'index-v1.html',
     '/v2': 'index-v2.html',
     '/v3': 'index-v3.html',
@@ -1750,6 +1899,25 @@ const server = http.createServer(async (req, res) => {
     if (path.extname(pathname)) {
       res.writeHead(404, { 'Content-Type': 'text/plain' });
       return res.end('Not Found');
+    }
+
+    // Anime clone SPA sub-routing
+    if (pathname.startsWith('/animes') || pathname.startsWith('/anime') || pathname.startsWith('/anime-stream')) {
+      const animeIndexPath = path.join(__dirname, 'index-anime.html');
+      fs.readFile(animeIndexPath, 'utf-8', (animeErr, html) => {
+        if (animeErr) {
+          res.writeHead(500);
+          return res.end('Error loading index-anime.html');
+        }
+        res.writeHead(200, {
+          'Content-Type': 'text/html; charset=utf-8',
+          'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        });
+        res.end(html);
+      });
+      return;
     }
 
     // SPA Fallback: Serve index.html for all other routes
